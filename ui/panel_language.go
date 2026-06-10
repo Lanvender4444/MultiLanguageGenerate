@@ -3,47 +3,61 @@ package ui
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/yourname/MultiLanguageGenerate/internal/language"
 )
 
 type LanguagePanel struct {
-	widget.BaseWidget
-	languages []language.Language
-	checks    map[string]*widget.Check
-	scroll    *container.Scroll
-	onChange  func()
+	checks   []*widget.Check
+	codes    []string
+	names    []string
+	box      *fyne.Container
+	onChange func()
 }
 
 func NewLanguagePanel() *LanguagePanel {
 	p := &LanguagePanel{
-		checks: make(map[string]*widget.Check),
+		onChange: func() {},
 	}
 	return p
 }
 
 func (p *LanguagePanel) SetLanguages(languages []language.Language) {
-	p.languages = languages
-	p.checks = make(map[string]*widget.Check)
-	p.Refresh()
+	p.checks = nil
+	p.codes = nil
+	p.names = nil
+
+	for _, lang := range languages {
+		code := lang.Code
+		name := lang.Name
+		p.codes = append(p.codes, code)
+		p.names = append(p.names, name)
+		chk := widget.NewCheck(name+" ("+code+")", func(_ bool) {
+			if p.onChange != nil {
+				p.onChange()
+			}
+		})
+		p.checks = append(p.checks, chk)
+	}
+
+	p.rebuild()
 }
 
-func (p *LanguagePanel) CreateRenderer() fyne.WidgetRenderer {
-	grid := container.NewGridWithColumns(2)
-	for _, lang := range p.languages {
-		label := lang.Name + " (" + lang.Code + ")"
-		check, exists := p.checks[lang.Code]
-		if !exists {
-			check = widget.NewCheck(label, func(b bool) {
-				if p.onChange != nil {
-					p.onChange()
-				}
-			})
-			p.checks[lang.Code] = check
+func (p *LanguagePanel) rebuild() {
+	if p.box == nil {
+		p.box = container.NewVBox()
+	}
+	p.box.Objects = nil
+
+	col1 := container.NewVBox()
+	col2 := container.NewVBox()
+	for i, chk := range p.checks {
+		if i%2 == 0 {
+			col1.Add(chk)
+		} else {
+			col2.Add(chk)
 		}
-		grid.Add(check)
 	}
 
 	selectAllBtn := widget.NewButton("全选", func() {
@@ -58,25 +72,39 @@ func (p *LanguagePanel) CreateRenderer() fyne.WidgetRenderer {
 	})
 
 	header := container.NewHBox(
-		widget.NewLabelWithStyle("🌍 目标语言", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		layout.NewSpacer(),
+		widget.NewLabelWithStyle("目标语言", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		layoutSpacer(),
 		selectAllBtn,
 		deselectAllBtn,
 	)
 
+	grid := container.NewGridWithColumns(2, col1, col2)
 	scroll := container.NewVScroll(grid)
-	scroll.SetMinSize(fyne.NewSize(0, 200))
-	p.scroll = scroll
+	scroll.SetMinSize(fyne.NewSize(0, 250))
 
-	box := container.NewBorder(header, nil, nil, nil, scroll)
-	return widget.NewSimpleRenderer(box)
+	p.box.Add(header)
+	p.box.Add(scroll)
+	p.box.Refresh()
+}
+
+func layoutSpacer() *fyne.Container {
+	spacer := widget.NewLabel("")
+	spacer.ExtendBaseWidget(spacer)
+	return container.NewHBox(spacer)
+}
+
+func (p *LanguagePanel) Container() *fyne.Container {
+	if p.box == nil {
+		p.box = container.NewVBox(widget.NewLabel("加载语言列表中..."))
+	}
+	return p.box
 }
 
 func (p *LanguagePanel) SelectedLanguages() []language.Language {
 	var selected []language.Language
-	for _, lang := range p.languages {
-		if c, ok := p.checks[lang.Code]; ok && c.Checked {
-			selected = append(selected, lang)
+	for i, chk := range p.checks {
+		if chk.Checked {
+			selected = append(selected, language.Language{Code: p.codes[i], Name: p.names[i]})
 		}
 	}
 	return selected
@@ -97,16 +125,16 @@ func (p *LanguagePanel) SetSelectedCodes(codes []string) {
 	for _, c := range codes {
 		codeSet[c] = true
 	}
-	for code, check := range p.checks {
-		check.SetChecked(codeSet[code])
+	for i, chk := range p.checks {
+		chk.SetChecked(codeSet[p.codes[i]])
 	}
 }
 
 func (p *LanguagePanel) GetSelectedCodes() []string {
 	var codes []string
-	for code, check := range p.checks {
-		if check.Checked {
-			codes = append(codes, code)
+	for i, chk := range p.checks {
+		if chk.Checked {
+			codes = append(codes, p.codes[i])
 		}
 	}
 	return codes

@@ -11,7 +11,6 @@ import (
 )
 
 type SourcePanel struct {
-	widget.BaseWidget
 	entry      *widget.Entry
 	selectBtn  *widget.Button
 	langSelect *widget.Select
@@ -24,7 +23,7 @@ type SourcePanel struct {
 func NewSourcePanel(window fyne.Window) *SourcePanel {
 	p := &SourcePanel{
 		window:         window,
-		SourceLanguage: "auto",
+		SourceLanguage:  "auto",
 	}
 
 	p.entry = widget.NewEntry()
@@ -33,7 +32,7 @@ func NewSourcePanel(window fyne.Window) *SourcePanel {
 		p.SourceFile = s
 	}
 
-	p.selectBtn = widget.NewButton("选择文件", func() {
+	p.selectBtn = widget.NewButton("文件...", func() {
 		dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
 			if err != nil || reader == nil {
 				return
@@ -45,13 +44,9 @@ func NewSourcePanel(window fyne.Window) *SourcePanel {
 		}, window)
 	})
 
-	languages := []string{"AI 自动检测"}
-	knownLangs := []string{
-		"中文（简体）", "中文（繁體）", "English", "日本語", "한국어",
+	languages := []string{"AI 自动检测", "中文（简体）", "中文（繁體）", "English", "日本語", "한국어",
 		"español", "français", "Deutsch", "português", "русский",
-		"العربية", "हिन्दी", "Bahasa Indonesia", "italiano", "Nederlands",
-	}
-	languages = append(languages, knownLangs...)
+		"العربية", "हिन्दी", "Bahasa Indonesia", "italiano", "Nederlands"}
 
 	p.langSelect = widget.NewSelect(languages, func(s string) {
 		if s == "AI 自动检测" {
@@ -65,16 +60,15 @@ func NewSourcePanel(window fyne.Window) *SourcePanel {
 	return p
 }
 
-func (p *SourcePanel) CreateRenderer() fyne.WidgetRenderer {
-	box := container.NewVBox(
-		widget.NewLabelWithStyle("📄 源文件", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		container.NewBorder(nil, nil, nil, p.selectBtn, p.entry),
-		container.NewHBox(
-			widget.NewLabel("源语言:"),
-			p.langSelect,
-		),
+func (p *SourcePanel) Container() *fyne.Container {
+	fileRow := container.NewBorder(nil, nil, nil, p.selectBtn, p.entry)
+	langRow := container.NewHBox(widget.NewLabel("源语言:"), p.langSelect)
+
+	return container.NewVBox(
+		widget.NewLabelWithStyle("源文件", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		fileRow,
+		langRow,
 	)
-	return widget.NewSimpleRenderer(container.NewVScroll(box))
 }
 
 func (p *SourcePanel) ReadSourceContent() (string, error) {

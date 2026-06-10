@@ -11,6 +11,8 @@ type customTheme struct {
 	fyne.Theme
 }
 
+var _ fyne.Theme = (*customTheme)(nil)
+
 func NewCustomTheme() fyne.Theme {
 	return &customTheme{Theme: theme.DefaultTheme()}
 }

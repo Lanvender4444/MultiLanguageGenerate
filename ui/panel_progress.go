@@ -13,53 +13,57 @@ import (
 type progressItem struct {
 	code     string
 	label    *widget.Label
-	progress *widget.ProgressBar
 	status   *widget.Label
+	bar      *widget.ProgressBar
 	retryBtn *widget.Button
+	row      *fyne.Container
 }
 
 type ProgressPanel struct {
-	widget.BaseWidget
 	items map[string]*progressItem
+	list  *fyne.Container
 	box   *fyne.Container
 }
 
 func NewProgressPanel() *ProgressPanel {
 	p := &ProgressPanel{
 		items: make(map[string]*progressItem),
-		box:   container.NewVBox(),
 	}
+	p.list = container.NewVBox()
+	p.box = container.NewVBox(
+		widget.NewLabelWithStyle("翻译进度", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		p.list,
+	)
 	return p
 }
 
-func (p *ProgressPanel) CreateRenderer() fyne.WidgetRenderer {
-	header := widget.NewLabelWithStyle("📊 进度", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	wrapper := container.NewBorder(header, nil, nil, nil, container.NewVScroll(p.box))
-	return widget.NewSimpleRenderer(wrapper)
+func (p *ProgressPanel) Container() *fyne.Container {
+	return p.box
 }
 
 func (p *ProgressPanel) InitJobs(codes []string) {
 	p.items = make(map[string]*progressItem)
-	p.box.Objects = nil
+	p.list.Objects = nil
 
 	for _, code := range codes {
 		item := &progressItem{
 			code:     code,
 			label:    widget.NewLabel(code),
-			progress: widget.NewProgressBar(),
-			status:   widget.NewLabel("⏳ 等待中..."),
+			status:   widget.NewLabel("等待中..."),
+			bar:      widget.NewProgressBar(),
 			retryBtn: widget.NewButton("重试", nil),
 		}
 		item.retryBtn.Hide()
-		p.items[code] = item
-		p.box.Add(container.NewHBox(
+		item.row = container.NewHBox(
 			item.label,
-			item.progress,
+			item.bar,
 			item.status,
 			item.retryBtn,
-		))
+		)
+		p.items[code] = item
+		p.list.Add(item.row)
 	}
-	p.box.Refresh()
+	p.list.Refresh()
 }
 
 func (p *ProgressPanel) UpdateResult(result translator.Result) {
@@ -69,39 +73,30 @@ func (p *ProgressPanel) UpdateResult(result translator.Result) {
 	}
 
 	if result.Error != nil {
-		item.progress.SetValue(1)
-		item.status.SetText(fmt.Sprintf("❌ %s", result.Error.Error()))
+		item.bar.SetValue(1)
+		item.status.SetText(fmt.Sprintf("失败: %s", truncateError(result.Error.Error(), 50)))
 		item.retryBtn.Show()
 	} else {
-		item.progress.SetValue(1)
-		item.status.SetText(fmt.Sprintf("✅ %s", result.OutputPath))
+		item.bar.SetValue(1)
+		item.status.SetText("完成")
 	}
-	item.progress.Refresh()
+	item.bar.Refresh()
 	item.status.Refresh()
 	item.retryBtn.Refresh()
 }
 
 func (p *ProgressPanel) SetTranslating(code string) {
 	if item, ok := p.items[code]; ok {
-		item.status.SetText("⏳ 翻译中...")
-		item.progress.SetValue(0.5)
+		item.status.SetText("翻译中...")
+		item.bar.SetValue(0.3)
 		item.status.Refresh()
-		item.progress.Refresh()
+		item.bar.Refresh()
 	}
 }
 
-func (p *ProgressPanel) SetRetryFunc(code string, fn func()) {
-	if item, ok := p.items[code]; ok {
-		item.retryBtn.OnTapped = fn
+func truncateError(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
 	}
-}
-
-func (p *ProgressPanel) AllDone() bool {
-	for _, item := range p.items {
-		t := item.status.Text
-		if len(t) >= 2 && t[:2] == "⏳" {
-			return false
-		}
-	}
-	return true
+	return s[:maxLen] + "..."
 }

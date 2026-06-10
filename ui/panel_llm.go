@@ -13,18 +13,24 @@ import (
 )
 
 type LLMPanel struct {
-	widget.BaseWidget
-	cfg    *config.AppConfig
-	window fyne.Window
+	cfg       *config.AppConfig
+	window    fyne.Window
+	maps      displayToIDMap
 
 	providerSelect *widget.Select
 	modelSelect    *widget.Select
 	apiKeyEntry    *widget.Entry
 	customURLEntry *widget.Entry
-	saveBtn        *widget.Button
-	refreshBtn     *widget.Button
 
-	OnProviderChanged func(providerID string)
+	box *fyne.Container
+
+	syncing bool
+}
+
+type displayToIDMap struct {
+	displayToID map[string]string
+	idToDisplay map[string]string
+	names       []string
 }
 
 func NewLLMPanel(cfg *config.AppConfig, window fyne.Window) *LLMPanel {
@@ -32,39 +38,29 @@ func NewLLMPanel(cfg *config.AppConfig, window fyne.Window) *LLMPanel {
 		cfg:    cfg,
 		window: window,
 	}
+	p.maps.displayToID = make(map[string]string)
+	p.maps.idToDisplay = make(map[string]string)
 
 	providers := llm.AllProviders()
-	providerNames := make([]string, 0, len(providers))
 	for _, info := range providers {
-		providerNames = append(providerNames, info.DisplayName)
+		p.maps.displayToID[info.DisplayName] = info.ID
+		p.maps.idToDisplay[info.ID] = info.DisplayName
+		p.maps.names = append(p.maps.names, info.DisplayName)
 	}
 
-	displayToID := make(map[string]string)
-	idToDisplay := make(map[string]string)
-	for _, info := range providers {
-		displayToID[info.DisplayName] = info.ID
-		idToDisplay[info.ID] = info.DisplayName
-	}
-
-	p.providerSelect = widget.NewSelect(providerNames, func(s string) {
-		pid := displayToID[s]
+	p.providerSelect = widget.NewSelect(p.maps.names, func(s string) {
+		if p.syncing {
+			return
+		}
+		pid := p.maps.displayToID[s]
 		p.cfg.LLM.ActiveProvider = pid
-		if pc, ok := p.cfg.LLM.Providers[pid]; ok {
-			p.apiKeyEntry.SetText(pc.APIKey)
-			p.modelSelect.SetSelected(pc.Model)
-			info, _ := llm.GetProviderInfo(pid)
-			if info.BaseURL != "" && pc.BaseURL == "" {
-				p.customURLEntry.SetText("")
-			} else {
-				p.customURLEntry.SetText(pc.BaseURL)
-			}
-		}
-		if p.OnProviderChanged != nil {
-			p.OnProviderChanged(pid)
-		}
+		p.syncFieldsFromConfig()
 	})
 
-	p.modelSelect = widget.NewSelect([]string{}, func(s string) {
+	p.modelSelect = widget.NewSelect([]string{"(点击刷新获取列表)"}, func(s string) {
+		if p.syncing {
+			return
+		}
 		if pc, ok := p.cfg.LLM.Providers[p.cfg.LLM.ActiveProvider]; ok {
 			pc.Model = s
 			p.cfg.LLM.Providers[p.cfg.LLM.ActiveProvider] = pc
@@ -74,6 +70,9 @@ func NewLLMPanel(cfg *config.AppConfig, window fyne.Window) *LLMPanel {
 	p.apiKeyEntry = widget.NewPasswordEntry()
 	p.apiKeyEntry.SetPlaceHolder("输入 API Key...")
 	p.apiKeyEntry.OnChanged = func(s string) {
+		if p.syncing {
+			return
+		}
 		if pc, ok := p.cfg.LLM.Providers[p.cfg.LLM.ActiveProvider]; ok {
 			pc.APIKey = s
 			p.cfg.LLM.Providers[p.cfg.LLM.ActiveProvider] = pc
@@ -83,66 +82,81 @@ func NewLLMPanel(cfg *config.AppConfig, window fyne.Window) *LLMPanel {
 	p.customURLEntry = widget.NewEntry()
 	p.customURLEntry.SetPlaceHolder("留空使用默认 URL...")
 	p.customURLEntry.OnChanged = func(s string) {
+		if p.syncing {
+			return
+		}
 		if pc, ok := p.cfg.LLM.Providers[p.cfg.LLM.ActiveProvider]; ok {
 			pc.BaseURL = s
 			p.cfg.LLM.Providers[p.cfg.LLM.ActiveProvider] = pc
 		}
 	}
 
-	p.refreshBtn = widget.NewButton("刷新模型列表", func() {
-		pid := p.cfg.LLM.ActiveProvider
-		pc, ok := p.cfg.LLM.Providers[pid]
-		if !ok {
-			return
-		}
-		provider, err := llm.CreateProvider(pid, pc)
-		if err != nil {
-			dialog.ShowError(err, p.window)
-			return
-		}
-		models, err := provider.ListModels(context.Background())
-		if err != nil {
-			dialog.ShowError(err, p.window)
-			return
-		}
-		p.modelSelect.Options = models
-		if len(models) > 0 {
-			p.modelSelect.SetSelected(models[0])
-		}
-		p.modelSelect.Refresh()
-	})
-
-	p.saveBtn = widget.NewButton("保存配置", func() {
-		if err := p.cfg.Save(); err != nil {
-			dialog.ShowError(err, p.window)
-		} else {
-			dialog.ShowInformation("保存成功", "配置已保存", p.window)
-		}
-	})
-
-	if activeDisplay, ok := idToDisplay[cfg.LLM.ActiveProvider]; ok {
-		p.providerSelect.SetSelected(activeDisplay)
-	}
+	p.syncFieldsFromConfig()
 
 	return p
 }
 
-func (p *LLMPanel) CreateRenderer() fyne.WidgetRenderer {
-	box := container.NewVBox(
-		widget.NewLabelWithStyle("🤖 LLM 配置", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		container.NewGridWithColumns(2,
-			widget.NewLabel("Provider:"),
-			p.providerSelect,
-			widget.NewLabel("Model:"),
-			container.NewBorder(nil, nil, nil, p.refreshBtn, p.modelSelect),
-			widget.NewLabel("API Key:"),
-			p.apiKeyEntry,
-			widget.NewLabel("Custom URL:"),
-			p.customURLEntry,
-		),
-		p.saveBtn,
+func (p *LLMPanel) syncFieldsFromConfig() {
+	p.syncing = true
+	defer func() { p.syncing = false }()
+
+	pid := p.cfg.LLM.ActiveProvider
+	if display, ok := p.maps.idToDisplay[pid]; ok {
+		p.providerSelect.SetSelected(display)
+	}
+	if pc, ok := p.cfg.LLM.Providers[pid]; ok {
+		p.apiKeyEntry.SetText(pc.APIKey)
+		p.customURLEntry.SetText(pc.BaseURL)
+	}
+}
+
+func (p *LLMPanel) Container() *fyne.Container {
+	form := container.NewVBox(
+		widget.NewLabel("Provider:"),
+		p.providerSelect,
+		widget.NewLabel("Model:"),
+		container.NewBorder(nil, nil, nil, widget.NewButton("刷新", p.refreshModels), p.modelSelect),
+		widget.NewLabel("API Key:"),
+		p.apiKeyEntry,
+		widget.NewLabel("自定义 URL:"),
+		p.customURLEntry,
+		widget.NewButton("保存配置", func() {
+			if err := p.cfg.Save(); err != nil {
+				dialog.ShowError(err, p.window)
+			} else {
+				dialog.ShowInformation("提示", "配置已保存", p.window)
+			}
+		}),
 	)
-	return widget.NewSimpleRenderer(box)
+
+	p.box = container.NewVBox(
+		widget.NewLabelWithStyle("LLM 配置", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		form,
+	)
+	return p.box
+}
+
+func (p *LLMPanel) refreshModels() {
+	pid := p.cfg.LLM.ActiveProvider
+	pc, ok := p.cfg.LLM.Providers[pid]
+	if !ok {
+		return
+	}
+	provider, err := llm.CreateProvider(pid, pc)
+	if err != nil {
+		dialog.ShowError(err, p.window)
+		return
+	}
+	models, err := provider.ListModels(context.Background())
+	if err != nil {
+		dialog.ShowError(err, p.window)
+		return
+	}
+	p.modelSelect.Options = models
+	if len(models) > 0 {
+		p.modelSelect.SetSelected(models[0])
+	}
+	p.modelSelect.Refresh()
 }
 
 func (p *LLMPanel) GetCurrentProviderConfig() (string, config.ProviderConfig) {

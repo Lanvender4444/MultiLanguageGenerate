@@ -31,8 +31,10 @@ type App struct {
 
 	outputDirEntry *widget.Entry
 	workerSlider   *widget.Slider
+	workerLabel    *widget.Label
 	timeoutEntry   *widget.Entry
 	translateBtn   *widget.Button
+	langFileBtn   *widget.Button
 
 	cancelFunc context.CancelFunc
 }
@@ -49,40 +51,56 @@ func NewApp(fyneApp fyne.App) *App {
 	a.cfg = cfg
 
 	a.mainWindow = fyneApp.NewWindow("MultiLanguageGenerate")
-	a.mainWindow.Resize(fyne.NewSize(800, 700))
+	a.mainWindow.Resize(fyne.NewSize(750, 850))
 
 	a.sourcePanel = NewSourcePanel(a.mainWindow)
 	a.langPanel = NewLanguagePanel()
 	a.llmPanel = NewLLMPanel(cfg, a.mainWindow)
 	a.progressPanel = NewProgressPanel()
 
-	a.loadLanguages()
-
 	a.outputDirEntry = widget.NewEntry()
-	a.outputDirEntry.SetPlaceHolder("同源文件目录")
+	a.outputDirEntry.SetPlaceHolder("留空则与源文件同目录")
 	a.outputDirEntry.SetText(cfg.OutputDirectory)
 
 	a.workerSlider = widget.NewSlider(1, 20)
 	a.workerSlider.Step = 1
 	a.workerSlider.SetValue(float64(cfg.MaxWorkers))
+	a.workerLabel = widget.NewLabel(fmt.Sprintf("%d", cfg.MaxWorkers))
+	a.workerSlider.OnChanged = func(v float64) {
+		a.workerLabel.SetText(fmt.Sprintf("%d", int(v)))
+	}
 
 	a.timeoutEntry = widget.NewEntry()
 	a.timeoutEntry.SetText(fmt.Sprintf("%d", cfg.RequestTimeoutSeconds))
 
-	a.translateBtn = widget.NewButton("🚀 开始翻译", a.startTranslation)
+	a.translateBtn = widget.NewButton("开始翻译", a.startTranslation)
+
+	a.langFileBtn = widget.NewButton("加载语言文件...", func() {
+		dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
+			if err != nil || reader == nil {
+				return
+			}
+			path := reader.URI().Path()
+			reader.Close()
+			a.cfg.LanguageFilePath = path
+			a.loadLanguages()
+		}, a.mainWindow)
+	})
+
+	a.loadLanguages()
+	a.restoreLastSelected()
 
 	a.langPanel.SetOnChange(func() {
 		count := a.langPanel.SelectedCount()
 		if count > 0 {
-			a.translateBtn.SetText(fmt.Sprintf("🚀 开始翻译 (%d 种语言)", count))
+			a.translateBtn.SetText(fmt.Sprintf("开始翻译 (%d 种语言)", count))
 		} else {
-			a.translateBtn.SetText("🚀 开始翻译")
+			a.translateBtn.SetText("开始翻译")
 		}
 	})
 
-	a.restoreLastSelected()
-
-	a.buildUI()
+	content := a.buildUI()
+	a.mainWindow.SetContent(content)
 
 	return a
 }
@@ -98,7 +116,6 @@ func (a *App) loadLanguages() {
 			}
 		}
 	}
-
 	if langPath == "" {
 		cwd, _ := os.Getwd()
 		candidate := filepath.Join(cwd, "MultiLanguage.json")
@@ -106,7 +123,6 @@ func (a *App) loadLanguages() {
 			langPath = candidate
 		}
 	}
-
 	if langPath != "" {
 		languages, err := language.Load(langPath)
 		if err == nil {
@@ -122,8 +138,8 @@ func (a *App) restoreLastSelected() {
 	}
 }
 
-func (a *App) buildUI() {
-	outputDirBtn := widget.NewButton("选择", func() {
+func (a *App) buildUI() fyne.CanvasObject {
+	outputDirBtn := widget.NewButton("选择目录", func() {
 		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
 			if err != nil || uri == nil {
 				return
@@ -132,49 +148,41 @@ func (a *App) buildUI() {
 		}, a.mainWindow)
 	})
 
-	optionsPanel := container.NewVBox(
-		widget.NewLabelWithStyle("⚙️ 选项", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		container.NewGridWithColumns(2,
-			widget.NewLabel("输出目录:"),
-			container.NewBorder(nil, nil, nil, outputDirBtn, a.outputDirEntry),
+	optionsCard := container.NewVBox(
+		widget.NewLabelWithStyle("选项", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("输出目录:"),
+		container.NewBorder(nil, nil, nil, outputDirBtn, a.outputDirEntry),
+		container.NewHBox(
 			widget.NewLabel("并发数:"),
-			container.NewHBox(a.workerSlider, widget.NewLabel("workers")),
-			widget.NewLabel("超时:"),
-			container.NewHBox(a.timeoutEntry, widget.NewLabel("秒")),
+			a.workerSlider,
+			a.workerLabel,
+		),
+		container.NewHBox(
+			widget.NewLabel("超时(秒):"),
+			a.timeoutEntry,
 		),
 	)
 
-	langFileBtn := widget.NewButton("选择语言文件", func() {
-		dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
-			if err != nil || reader == nil {
-				return
-			}
-			path := reader.URI().Path()
-			reader.Close()
-			a.cfg.LanguageFilePath = path
-			a.loadLanguages()
-		}, a.mainWindow)
-	})
-
-	content := container.NewVBox(
-		a.sourcePanel,
-		widget.NewSeparator(),
-		a.langPanel,
-		widget.NewSeparator(),
-		a.llmPanel,
-		widget.NewSeparator(),
-		optionsPanel,
-		widget.NewSeparator(),
-		langFileBtn,
+	actionsCard := container.NewVBox(
+		a.langFileBtn,
 		a.translateBtn,
-		widget.NewSeparator(),
-		a.progressPanel,
 	)
 
-	scroll := container.NewVScroll(content)
-	scroll.SetMinSize(fyne.NewSize(780, 680))
+	content := container.NewVBox(
+		a.sourcePanel.Container(),
+		widget.NewSeparator(),
+		a.langPanel.Container(),
+		widget.NewSeparator(),
+		a.llmPanel.Container(),
+		widget.NewSeparator(),
+		optionsCard,
+		widget.NewSeparator(),
+		actionsCard,
+		widget.NewSeparator(),
+		a.progressPanel.Container(),
+	)
 
-	a.mainWindow.SetContent(scroll)
+	return container.NewVScroll(content)
 }
 
 func (a *App) startTranslation() {
@@ -208,9 +216,8 @@ func (a *App) startTranslation() {
 
 	sourceLang := a.sourcePanel.SourceLanguage
 	if sourceLang == "auto" {
-		code, name := detector.DetectLocal(sourceContent)
+		_, name := detector.DetectLocal(sourceContent)
 		sourceLang = name
-		_ = code
 	}
 
 	outputDir := a.outputDirEntry.Text
@@ -231,12 +238,12 @@ func (a *App) startTranslation() {
 	codes := make([]string, 0, len(selectedLangs))
 	for _, lang := range selectedLangs {
 		jobs = append(jobs, translator.Job{
-			SourceText:     sourceContent,
-			SourceFile:     a.sourcePanel.SourceFile,
-			SourceLanguage: sourceLang,
-			TargetCode:     lang.Code,
-			TargetName:     lang.Name,
-			OutputDir:      outputDir,
+			SourceText:      sourceContent,
+			SourceFile:      a.sourcePanel.SourceFile,
+			SourceLanguage:  sourceLang,
+			TargetCode:      lang.Code,
+			TargetName:      lang.Name,
+			OutputDir:       outputDir,
 		})
 		codes = append(codes, lang.Code)
 	}
@@ -252,14 +259,19 @@ func (a *App) startTranslation() {
 	ctx, cancel := context.WithCancel(context.Background())
 	a.cancelFunc = cancel
 
-	a.translateBtn.SetText("⏹ 取消翻译")
+	a.translateBtn.SetText("取消翻译")
 	a.translateBtn.OnTapped = func() {
 		cancel()
-		a.translateBtn.SetText("🚀 开始翻译")
+		a.translateBtn.SetText("开始翻译")
 		a.translateBtn.OnTapped = a.startTranslation
+		a.translateBtn.Refresh()
 	}
 
 	progress := make(chan translator.Result, len(jobs))
+
+	for _, code := range codes {
+		a.progressPanel.SetTranslating(code)
+	}
 
 	go func() {
 		engine.Run(ctx, jobs, progress)
@@ -270,7 +282,7 @@ func (a *App) startTranslation() {
 			r := result
 			a.progressPanel.UpdateResult(r)
 		}
-		a.translateBtn.SetText(fmt.Sprintf("🚀 开始翻译 (%d 种语言)", len(selectedLangs)))
+		a.translateBtn.SetText(fmt.Sprintf("开始翻译 (%d 种语言)", len(selectedLangs)))
 		a.translateBtn.OnTapped = a.startTranslation
 		a.translateBtn.Refresh()
 	}()
