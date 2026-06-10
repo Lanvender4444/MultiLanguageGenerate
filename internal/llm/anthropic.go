@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/processor"
 )
 
 type AnthropicProvider struct {
@@ -39,7 +41,7 @@ type anthropicResponse struct {
 }
 
 func (p *AnthropicProvider) Translate(ctx context.Context, req TranslateRequest) (string, error) {
-	sysPrompt := buildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode)
+	sysPrompt := processor.BuildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode, req.SourceType)
 
 	antReq := anthropicRequest{
 		Model:     req.Model,

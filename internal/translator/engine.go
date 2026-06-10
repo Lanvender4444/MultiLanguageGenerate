@@ -2,12 +2,14 @@ package translator
 
 import (
 	"context"
-	"os"
+	"fmt"
+	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/filetype"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/llm"
-	"github.com/Lanvender4444/MultiLanguageGenerate/internal/output"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/processor"
 )
 
 type Engine struct {
@@ -47,20 +49,28 @@ func (e *Engine) Run(ctx context.Context, jobs []Job, progress chan<- Result) {
 			taskCtx, cancel := context.WithTimeout(ctx, e.Timeout)
 			defer cancel()
 
+			proc := processor.NewProcessor(job.SourceFileType, job.SourceFile)
+			extractedText, err := proc.Extract(job.SourceFile)
+			if err != nil {
+				progress <- Result{TargetCode: job.TargetCode, Error: fmt.Errorf("extract file: %w", err)}
+				return
+			}
+
 			translated, err := e.Provider.Translate(taskCtx, llm.TranslateRequest{
-				SourceText:     job.SourceText,
+				SourceText:     extractedText,
 				SourceLanguage: job.SourceLanguage,
 				TargetLanguage: job.TargetName,
 				TargetCode:     job.TargetCode,
 				Model:          e.Model,
+				SourceType:     job.SourceFileType,
 			})
 
 			result := Result{TargetCode: job.TargetCode}
 			if err != nil {
 				result.Error = err
 			} else {
-				outPath := output.BuildOutputPath(job.SourceFile, job.TargetCode, job.OutputDir)
-				err = os.WriteFile(outPath, []byte(translated), 0644)
+				outPath := buildOutputPath(job.SourceFile, job.TargetCode, job.OutputDir, job.SourceFileType)
+				err = proc.Rebuild(translated, outPath)
 				if err != nil {
 					result.Error = err
 				} else {
@@ -73,4 +83,27 @@ func (e *Engine) Run(ctx context.Context, jobs []Job, progress chan<- Result) {
 
 	wg.Wait()
 	close(progress)
+}
+
+func buildOutputPath(sourceFile, targetCode, outputDir string, ft filetype.FileType) string {
+	ext := filepath.Ext(sourceFile)
+	base := filepath.Base(sourceFile)
+	name := base[:len(base)-len(ext)]
+
+	switch ft {
+	case filetype.FileTypeDOCX:
+		ext = ".docx"
+	case filetype.FileTypeXLSX:
+		ext = ".xlsx"
+	case filetype.FileTypeHTML:
+	case filetype.FileTypeSRT:
+	default:
+	}
+
+	outName := name + "_" + targetCode + ext
+
+	if outputDir != "" {
+		return filepath.Join(outputDir, outName)
+	}
+	return filepath.Join(filepath.Dir(sourceFile), outName)
 }

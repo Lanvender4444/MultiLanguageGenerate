@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/processor"
 )
 
 type OpenAICompatProvider struct {
@@ -44,21 +46,8 @@ type modelEntry struct {
 	ID string `json:"id"`
 }
 
-func buildSystemPrompt(srcLang, dstLang, dstCode string) string {
-	return fmt.Sprintf(`You are a professional technical document translator.
-Translate the following document from %s to %s (%s).
-
-Rules:
-1. Preserve ALL original formatting (Markdown syntax, HTML tags, code blocks, etc.)
-2. Do NOT translate content inside code blocks (`+"```"+` `+"```"+` or indented code)
-3. Do NOT translate URLs, file paths, variable names, or command-line arguments
-4. Translate comments inside code blocks if they are in the source language
-5. Keep the same line structure and whitespace as the original
-6. Output ONLY the translated content, no explanations or preamble`, srcLang, dstLang, dstCode)
-}
-
 func (p *OpenAICompatProvider) Translate(ctx context.Context, req TranslateRequest) (string, error) {
-	sysPrompt := buildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode)
+	sysPrompt := processor.BuildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode, req.SourceType)
 
 	chatReq := chatRequest{
 		Model: req.Model,

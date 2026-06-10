@@ -100,3 +100,9 @@ func truncateError(s string, maxLen int) string {
 	}
 	return s[:maxLen] + "..."
 }
+
+func (p *ProgressPanel) AddStatusLine(text string) {
+	lbl := widget.NewLabel(text)
+	p.list.Add(lbl)
+	p.list.Refresh()
+}

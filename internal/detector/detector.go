@@ -5,6 +5,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/filetype"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/llm"
 )
 
@@ -58,6 +59,7 @@ func DetectAI(ctx context.Context, content string, provider llm.Provider, model 
 		TargetLanguage: "return only the language code and name",
 		TargetCode:     "detect",
 		Model:          model,
+		SourceType:     filetype.FileTypePlainText,
 	})
 	if err != nil {
 		return "", "", err

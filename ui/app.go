@@ -14,6 +14,7 @@ import (
 
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/config"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/detector"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/filetype"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/language"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/llm"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/translator"
@@ -232,6 +233,11 @@ func (a *App) startTranslation() {
 	timeoutSec := a.cfg.RequestTimeoutSeconds
 	fmt.Sscanf(a.timeoutEntry.Text, "%d", &timeoutSec)
 
+	srcFileType := filetype.DetectFile(a.sourcePanel.SourceFile)
+	ext := filepath.Ext(a.sourcePanel.SourceFile)
+	typeInfo := filetype.TypeInfoOf(srcFileType)
+	a.progressPanel.AddStatusLine(fmt.Sprintf("文件类型: %s (%s)", typeInfo.Description, ext))
+
 	engine := translator.NewEngine(provider, pc.Model, maxWorkers, time.Duration(timeoutSec)*time.Second)
 
 	jobs := make([]translator.Job, 0, len(selectedLangs))
@@ -244,6 +250,7 @@ func (a *App) startTranslation() {
 			TargetCode:      lang.Code,
 			TargetName:      lang.Name,
 			OutputDir:       outputDir,
+			SourceFileType:  srcFileType,
 		})
 		codes = append(codes, lang.Code)
 	}

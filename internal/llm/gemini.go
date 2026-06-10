@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/processor"
 )
 
 type GeminiProvider struct {
@@ -48,7 +50,7 @@ type geminiResponse struct {
 }
 
 func (p *GeminiProvider) Translate(ctx context.Context, req TranslateRequest) (string, error) {
-	sysPrompt := buildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode)
+	sysPrompt := processor.BuildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode, req.SourceType)
 
 	genReq := geminiGenerateRequest{
 		SystemInstruction: &geminiSystemInstruction{
