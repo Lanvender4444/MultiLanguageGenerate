@@ -8,8 +8,8 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/yourname/MultiLanguageGenerate/internal/config"
-	"github.com/yourname/MultiLanguageGenerate/internal/llm"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/config"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/llm"
 )
 
 type LLMPanel struct {

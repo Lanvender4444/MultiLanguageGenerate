@@ -7,7 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/yourname/MultiLanguageGenerate/internal/translator"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/translator"
 )
 
 type progressItem struct {

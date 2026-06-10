@@ -1,4 +1,4 @@
-module github.com/yourname/MultiLanguageGenerate
+module github.com/Lanvender4444/MultiLanguageGenerate
 
 go 1.26.4
 

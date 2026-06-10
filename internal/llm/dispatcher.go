@@ -3,7 +3,7 @@ package llm
 import (
 	"fmt"
 
-	"github.com/yourname/MultiLanguageGenerate/internal/config"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/config"
 )
 
 type ProviderInfo struct {

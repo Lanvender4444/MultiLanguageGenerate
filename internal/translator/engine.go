@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yourname/MultiLanguageGenerate/internal/llm"
-	"github.com/yourname/MultiLanguageGenerate/internal/output"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/llm"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/output"
 )
 
 type Engine struct {

@@ -5,7 +5,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/yourname/MultiLanguageGenerate/internal/language"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/language"
 )
 
 type LanguagePanel struct {

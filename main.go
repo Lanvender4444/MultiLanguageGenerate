@@ -3,7 +3,7 @@ package main
 import (
 	"fyne.io/fyne/v2/app"
 
-	"github.com/yourname/MultiLanguageGenerate/ui"
+	"github.com/Lanvender4444/MultiLanguageGenerate/ui"
 )
 
 func main() {

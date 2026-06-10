@@ -5,7 +5,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/yourname/MultiLanguageGenerate/internal/llm"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/llm"
 )
 
 func DetectLocal(content string) (code, name string) {

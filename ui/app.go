@@ -12,11 +12,11 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/yourname/MultiLanguageGenerate/internal/config"
-	"github.com/yourname/MultiLanguageGenerate/internal/detector"
-	"github.com/yourname/MultiLanguageGenerate/internal/language"
-	"github.com/yourname/MultiLanguageGenerate/internal/llm"
-	"github.com/yourname/MultiLanguageGenerate/internal/translator"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/config"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/detector"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/language"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/llm"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/translator"
 )
 
 type App struct {
