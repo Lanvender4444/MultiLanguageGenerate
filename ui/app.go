@@ -280,11 +280,15 @@ func (a *App) startTranslation() {
 	go func() {
 		for result := range progress {
 			r := result
-			a.progressPanel.UpdateResult(r)
+			fyne.Do(func() {
+				a.progressPanel.UpdateResult(r)
+			})
 		}
-		a.translateBtn.SetText(fmt.Sprintf("开始翻译 (%d 种语言)", len(selectedLangs)))
-		a.translateBtn.OnTapped = a.startTranslation
-		a.translateBtn.Refresh()
+		fyne.Do(func() {
+			a.translateBtn.SetText(fmt.Sprintf("开始翻译 (%d 种语言)", len(selectedLangs)))
+			a.translateBtn.OnTapped = a.startTranslation
+			a.translateBtn.Refresh()
+		})
 	}()
 }
 
