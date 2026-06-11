@@ -4,10 +4,10 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"regexp"
 	"strings"
+	"math"
 
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/filetype"
 )
@@ -194,6 +194,7 @@ func parseParagraphs(xmlContent string) []ParagraphInfo {
 
 // ─────────────────────────────────────────────
 // rebuildParagraphContent：按 run 比例分配译文，从后往前替换
+// rebuildParagraphContent2：放进第一个run
 // ─────────────────────────────────────────────
 
 func rebuildParagraphContent(para ParagraphInfo, translatedFull string) string {
@@ -247,6 +248,42 @@ func rebuildParagraphContent(para ParagraphInfo, translatedFull string) string {
 	}
 
 	return result
+}
+
+func rebuildParagraphContent2(para ParagraphInfo, translatedFull string) string {
+    if len(para.Runs) == 0 {
+        return para.ParaContent
+    }
+
+    // 找第一个有实际文字内容的 run，译文全部放进它
+    // 其余 run 的 <w:t> 内容清空（保留 run 的格式属性）
+    firstIdx := -1
+    for i, run := range para.Runs {
+        if strings.TrimSpace(run.Text) != "" {
+            firstIdx = i
+            break
+        }
+    }
+    if firstIdx == -1 {
+        // 全是空 run，原样返回
+        return para.ParaContent
+    }
+
+    // 从后往前替换，保证字节偏移不偏移
+    result := para.ParaContent
+    for i := len(para.Runs) - 1; i >= 0; i-- {
+        run := para.Runs[i]
+        var newContent string
+        if i == firstIdx {
+            // 第一个有文字的 run：放入全部译文
+            newContent = run.OpenTag + encodeXMLEntities(translatedFull) + "</w:t>"
+        } else {
+            // 其余 run：清空文字，保留格式标签结构
+            newContent = run.OpenTag + "</w:t>"
+        }
+        result = result[:run.StartInPara] + newContent + result[run.EndInPara:]
+    }
+    return result
 }
 
 // ─────────────────────────────────────────────
