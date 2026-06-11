@@ -129,8 +129,15 @@ func (a *App) loadLanguages() {
 		if err == nil {
 			a.langPanel.SetLanguages(languages)
 			a.cfg.LanguageFilePath = langPath
+			return
 		}
 	}
+	languages, err := language.LoadEmbedded()
+	if err != nil {
+		dialog.ShowError(fmt.Errorf("无法加载语言列表: %v", err), a.mainWindow)
+		return
+	}
+	a.langPanel.SetLanguages(languages)
 }
 
 func (a *App) restoreLastSelected() {
