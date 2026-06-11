@@ -1,18 +1,24 @@
 # MultiLanguageGenerate
-利用 Golang + LLM API， 批量生成翻译文件。
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Go Version](https://img.shields.io/badge/go-1.22+-00ADD8.svg?style=flat&logo=go)](https://golang.org)
+![Cgo Supported](https://img.shields.io/badge/Cgo-Supported-blue?style=flat&logo=go&logoColor=white)
+![GCC Required](https://img.shields.io/badge/GCC-Required-51789c?style=flat&logo=gnu-compiler-collection&logoColor=white)
+![Fyne GUI](https://img.shields.io/badge/Fyne-GUI_Framework-00d2ff?style=flat&logo=go&logoColor=white)
 
-## 自己编译
-### Windows
-1. 安装 GCC（仅首次需要）
-从 https://github.com/brechtsanders/winlibs_mingw/releases 下载 winlibs-x86_64-posix-seh-gcc-*-ucrt-*.zip，解压到 C:\winlibs\，确保 C:\winlibs\mingw64\bin\gcc.exe 存在。
 
-还需从 zip 中提取 mingw64/x86_64-w64-mingw32/ 目录到 C:\winlibs\mingw64\x86_64-w64-mingw32\。
 
-2. 编译
-```powershell
-$env:PATH = "C:\winlibs\mingw64\bin;" + $env:PATH
-$env:GOPROXY = "https://goproxy.cn,direct"
-$env:CGO_ENABLED = "1"
-go build -ldflags="-s -w" -o MultiLanguageGenerate.exe .
-```
+MultiLanguageGenerate 是一款基于 Golang 的，高并发 多语言 多格式 翻译文件生成器。
+
+## 核心特性
+**高并发**: 利用Golang的包并发特性开发。
+
+**多类型**: 匹配多种文件类型，更灵活的进行翻译。
+
+**AI驱动**: 利用 LLM API，进行翻译。
+
+## 快速上手
+### 本地编译
+[还没写好]
+### 下载发行版
+[👉 GitHub Releases](https://github.com/Lanvender4444/MultiLanguageGenerate/releases)
 
