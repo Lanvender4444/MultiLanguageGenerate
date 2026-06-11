@@ -73,18 +73,26 @@ func (p *DOCXProcessor) FileType() filetype.FileType {
 }
 
 var wtTagRe = regexp.MustCompile(`<w:t[^>]*>(.*?)</w:t>`)
+var paraOpenRe = regexp.MustCompile(`<w:p(?:\s[^>]*)?>`)
 
 func extractParagraphs(xmlContent string) []string {
-	paraRe := regexp.MustCompile(`<w:p[ >]`)
-	parts := paraRe.Split(xmlContent, -1)
-
 	var paragraphs []string
-	for i := 1; i < len(parts); i++ {
-		endIdx := strings.Index(parts[i], "</w:p>")
-		if endIdx == -1 {
-			continue
+	pos := 0
+
+	for pos < len(xmlContent) {
+		loc := paraOpenRe.FindStringIndex(xmlContent[pos:])
+		if loc == nil {
+			break
 		}
-		paraContent := parts[i][:endIdx]
+
+		paraContentStart := pos + loc[1]
+		closeIdx := strings.Index(xmlContent[paraContentStart:], "</w:p>")
+		if closeIdx == -1 {
+			break
+		}
+
+		paraContent := xmlContent[paraContentStart : paraContentStart+closeIdx]
+		pos = paraContentStart + closeIdx + len("</w:p>")
 
 		matches := wtTagRe.FindAllStringSubmatch(paraContent, -1)
 		var texts []string
@@ -102,44 +110,48 @@ func extractParagraphs(xmlContent string) []string {
 }
 
 func replaceParagraphsInXML(originalXML string, translatedParagraphs []string) (string, error) {
-	paraRe := regexp.MustCompile(`<w:p[ >]`)
-	parts := paraRe.Split(originalXML, -1)
-
-	paraIdx := 0
 	var result strings.Builder
-	result.WriteString(parts[0])
+	paraIdx := 0
+	pos := 0
 
-	for i := 1; i < len(parts); i++ {
-		endIdx := strings.Index(parts[i], "</w:p>")
-		if endIdx == -1 {
-			result.WriteString("<w:p")
-			result.WriteString(parts[i])
+	for pos < len(originalXML) {
+		loc := paraOpenRe.FindStringIndex(originalXML[pos:])
+		if loc == nil {
+			result.WriteString(originalXML[pos:])
+			break
+		}
+
+		result.WriteString(originalXML[pos : pos+loc[0]])
+
+		openTag := originalXML[pos+loc[0] : pos+loc[1]]
+		paraContentStart := pos + loc[1]
+
+		closeIdx := strings.Index(originalXML[paraContentStart:], "</w:p>")
+		if closeIdx == -1 {
+			result.WriteString(openTag)
+			pos = paraContentStart
 			continue
 		}
 
-		paraContent := parts[i][:endIdx]
-		rest := parts[i][endIdx+len("</w:p>"):]
+		paraContent := originalXML[paraContentStart : paraContentStart+closeIdx]
+		afterClose := paraContentStart + closeIdx + len("</w:p>")
 
 		matches := wtTagRe.FindAllStringSubmatchIndex(paraContent, -1)
 
-		if len(matches) == 0 {
-			result.WriteString("<w:p")
-			result.WriteString(parts[i])
-			continue
-		}
-
-		if paraIdx < len(translatedParagraphs) {
+		if len(matches) == 0 || paraIdx >= len(translatedParagraphs) {
+			result.WriteString(openTag)
+			result.WriteString(paraContent)
+			result.WriteString("</w:p>")
+		} else {
 			newText := encodeXMLEntities(translatedParagraphs[paraIdx])
 			modified := replaceWTTexts(paraContent, newText)
-			result.WriteString("<w:p")
+			result.WriteString(openTag)
 			result.WriteString(modified)
 			result.WriteString("</w:p>")
-			result.WriteString(rest)
 			paraIdx++
-		} else {
-			result.WriteString("<w:p")
-			result.WriteString(parts[i])
 		}
+
+		pos = afterClose
 	}
 
 	return result.String(), nil
