@@ -112,7 +112,7 @@ STRICT RULES - you MUST follow these rules:
 6. Keep the exact same number of entries
 7. Output ONLY the translated PO content, no explanations`
 
-	case filetype.FileTypeDOCX:
+	case filetype.FileTypeDOCX, filetype.FileTypeXLSX:
 		return base + `
 STRICT RULES - you MUST follow these rules:
 1. Translate ONLY the plain text content provided to you
@@ -120,7 +120,16 @@ STRICT RULES - you MUST follow these rules:
 3. Do NOT add or remove any markers
 4. Maintain paragraph structure - each line of input corresponds to one paragraph
 5. If a paragraph is empty or contains only a marker, output it unchanged
-6. Output ONLY the translated text, no explanations or preamble`
+6. CRITICAL: Do NOT output ANY Markdown syntax whatsoever. This content comes from a Word/Excel document.
+   - Do NOT use **bold**, *italic*, __underline__ or any asterisk/underscore formatting
+   - Do NOT use # headings, ## subheadings, or any hash-based formatting
+   - Do NOT use | table | syntax, do NOT create Markdown tables
+   - Do NOT use - * + bullet list markers at line starts
+   - Do NOT use ` + "`" + `code` + "`" + ` or ` + "```" + `code blocks` + "```" + `
+   - Do NOT use > blockquotes
+   - Do NOT use [link](url) or ![image](url) syntax
+   - Output ONLY plain text, exactly as structured in the input
+7. Output ONLY the translated text, no explanations or preamble`
 
 	default:
 		return base + `
