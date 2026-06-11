@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"time"
 
@@ -69,6 +70,7 @@ func (e *Engine) Run(ctx context.Context, jobs []Job, progress chan<- Result) {
 			if err != nil {
 				result.Error = err
 			} else {
+				translated = sanitizeForDocx(translated, job.SourceFileType)
 				outPath := buildOutputPath(job.SourceFile, job.TargetCode, job.OutputDir, job.SourceFileType)
 				err = proc.Rebuild(translated, outPath)
 				if err != nil {
@@ -106,4 +108,28 @@ func buildOutputPath(sourceFile, targetCode, outputDir string, ft filetype.FileT
 		return filepath.Join(outputDir, outName)
 	}
 	return filepath.Join(filepath.Dir(sourceFile), outName)
+}
+
+var (
+	mdBoldRe      = regexp.MustCompile(`\*{1,3}([^*]+)\*{1,3}`)
+	mdUnderscoreRe = regexp.MustCompile(`_{1,2}([^_]+)_{1,2}`)
+	mdHashRe      = regexp.MustCompile(`(?m)^#{1,6}\s+`)
+	mdCodeRe      = regexp.MustCompile("`([^`]+)`")
+	mdListRe      = regexp.MustCompile(`(?m)^[\s]*[-*+]\s+`)
+	mdTableRe     = regexp.MustCompile(`\|[^|\n]*\|`)
+	mdLinkRe      = regexp.MustCompile(`\[([^\]]*)\]\([^)]*\)`)
+)
+
+func sanitizeForDocx(text string, ft filetype.FileType) string {
+	if ft != filetype.FileTypeDOCX && ft != filetype.FileTypeXLSX {
+		return text
+	}
+	text = mdBoldRe.ReplaceAllString(text, "$1")
+	text = mdUnderscoreRe.ReplaceAllString(text, "$1")
+	text = mdHashRe.ReplaceAllString(text, "")
+	text = mdCodeRe.ReplaceAllString(text, "$1")
+	text = mdListRe.ReplaceAllString(text, "")
+	text = mdTableRe.ReplaceAllString(text, "")
+	text = mdLinkRe.ReplaceAllString(text, "$1")
+	return text
 }
