@@ -94,6 +94,59 @@ func TestRebuildXML_NonTextParagraph(t *testing.T) {
 	}
 }
 
+func TestDOCXSegments_SingleAndMultiRun(t *testing.T) {
+	xml := `<w:p><w:r><w:t>Plain paragraph</w:t></w:r></w:p>` +
+		`<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Bold</w:t></w:r><w:r><w:t xml:space="preserve"> and normal</w:t></w:r></w:p>`
+
+	p := &DOCXProcessor{SourcePath: "test.docx"}
+	p.cachedXML = xml
+	p.cachedParagraphs = parseParagraphs(xml)
+
+	segs, err := p.ExtractSegments()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(segs) != 2 {
+		t.Fatalf("expected 2 segments, got %d", len(segs))
+	}
+	if segs[0].Text != "Plain paragraph" {
+		t.Errorf("seg0=%q", segs[0].Text)
+	}
+	if segs[1].Text != "<r0>Bold</r0><r1> and normal</r1>" {
+		t.Errorf("seg1=%q (multi-run should use run marks)", segs[1].Text)
+	}
+}
+
+func TestDOCXSegments_RebuildWithRunMarks(t *testing.T) {
+	xml := `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Bold</w:t></w:r><w:r><w:t xml:space="preserve"> tail</w:t></w:r></w:p>`
+	p := &DOCXProcessor{SourcePath: "test.docx"}
+	p.cachedXML = xml
+	p.cachedParagraphs = parseParagraphs(xml)
+
+	// LLM 正确遵守协议
+	para := p.cachedParagraphs[0]
+	runTexts, ok := DecodeRunMarks("<r0>加粗</r0><r1> 尾部</r1>", len(para.Runs))
+	if !ok {
+		t.Fatal("decode failed")
+	}
+	rebuilt := rebuildParagraphWithRunTexts(para, runTexts)
+	if !strings.Contains(rebuilt, "<w:t>加粗</w:t>") {
+		t.Errorf("run0 wrong: %s", rebuilt)
+	}
+	if !strings.Contains(rebuilt, `<w:t xml:space="preserve"> 尾部</w:t>`) {
+		t.Errorf("run1 wrong: %s", rebuilt)
+	}
+	if !strings.Contains(rebuilt, "<w:rPr><w:b/></w:rPr>") {
+		t.Errorf("bold formatting lost: %s", rebuilt)
+	}
+
+	// LLM 破坏协议 → 回退到第一个 run
+	fallback := rebuildParagraphContent2(para, "加粗 尾部")
+	if !strings.Contains(fallback, "<w:t>加粗 尾部</w:t>") {
+		t.Errorf("fallback wrong: %s", fallback)
+	}
+}
+
 func TestEncodeDecodeXMLEntities(t *testing.T) {
 	tests := []struct {
 		input     string

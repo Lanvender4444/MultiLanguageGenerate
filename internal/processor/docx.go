@@ -91,7 +91,107 @@ func (p *DOCXProcessor) Extract(filePath string) (string, error) {
 }
 
 // ─────────────────────────────────────────────
+// Segment 协议实现
+// 单 run 段:发纯文本;多 run 段:发 <r0>..</r0> 标记文本,
+// 由 LLM 分配译文到各 run;解析失败回退到第一个 run。
+// ─────────────────────────────────────────────
+
+func (p *DOCXProcessor) ExtractSegments() ([]Segment, error) {
+	if p.cachedXML == "" || p.cachedParagraphs == nil {
+		xmlContent, err := readDocumentXML(p.SourcePath)
+		if err != nil {
+			return nil, err
+		}
+		p.cachedXML = xmlContent
+		p.cachedParagraphs = parseParagraphs(xmlContent)
+	}
+
+	var segs []Segment
+	for i, para := range p.cachedParagraphs {
+		if !para.HasText {
+			continue
+		}
+		text := para.FullText
+		if countTextRuns(para.Runs) > 1 {
+			runTexts := make([]string, len(para.Runs))
+			for j, r := range para.Runs {
+				runTexts[j] = r.Text
+			}
+			text = EncodeRunMarks(runTexts)
+		}
+		segs = append(segs, Segment{ID: fmt.Sprintf("%d", i), Text: text})
+	}
+	return segs, nil
+}
+
+func (p *DOCXProcessor) RebuildSegments(translations map[string]string, outputPath string) error {
+	if p.cachedXML == "" || p.cachedParagraphs == nil {
+		if _, err := p.ExtractSegments(); err != nil {
+			return err
+		}
+	}
+
+	paragraphs := p.cachedParagraphs
+	paraContents := make([]string, len(paragraphs))
+	for i, para := range paragraphs {
+		id := fmt.Sprintf("%d", i)
+		translated, ok := translations[id]
+		if !para.HasText || !ok || strings.TrimSpace(translated) == "" {
+			paraContents[i] = para.ParaContent // 未翻译的段落原样保留
+			continue
+		}
+
+		if countTextRuns(para.Runs) > 1 {
+			if runTexts, valid := DecodeRunMarks(translated, len(para.Runs)); valid {
+				for j := range runTexts {
+					runTexts[j] = SanitizeSegmentText(runTexts[j])
+				}
+				paraContents[i] = rebuildParagraphWithRunTexts(para, runTexts)
+				continue
+			}
+			// 标记损坏 → 回退:整段译文放进第一个有文字的 run
+			plain := SanitizeSegmentText(StripRunMarks(translated))
+			paraContents[i] = rebuildParagraphContent2(para, plain)
+			continue
+		}
+
+		plain := SanitizeSegmentText(StripRunMarks(translated))
+		paraContents[i] = rebuildParagraphContent(para, plain)
+	}
+
+	rebuiltXML := rebuildXML(p.cachedXML, paragraphs, paraContents)
+	return rebuildDocx(p.SourcePath, rebuiltXML, outputPath)
+}
+
+// countTextRuns 统计含非空白文字的 run 数
+func countTextRuns(runs []RunInfo) int {
+	n := 0
+	for _, r := range runs {
+		if strings.TrimSpace(r.Text) != "" {
+			n++
+		}
+	}
+	return n
+}
+
+// rebuildParagraphWithRunTexts 把指定的各 run 译文写回段落
+func rebuildParagraphWithRunTexts(para ParagraphInfo, runTexts []string) string {
+	result := para.ParaContent
+	for i := len(para.Runs) - 1; i >= 0; i-- {
+		run := para.Runs[i]
+		text := ""
+		if i < len(runTexts) {
+			text = runTexts[i]
+		}
+		newTag := run.OpenTag + encodeXMLEntities(text) + "</w:t>"
+		result = result[:run.StartInPara] + newTag + result[run.EndInPara:]
+	}
+	return result
+}
+
+// ─────────────────────────────────────────────
 // Rebuild：将翻译后的文字写回 docx，保留所有格式
+// （旧的行对齐协议，仅作兼容保留；引擎已改用 Segment 协议）
 // ─────────────────────────────────────────────
 
 func (p *DOCXProcessor) Rebuild(translatedText string, outputPath string) error {
