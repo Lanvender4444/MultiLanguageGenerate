@@ -42,11 +42,13 @@ type xlsxBlock struct {
 	Translatable bool
 }
 
+// 标签允许命名空间前缀(<si> 或 <x:si>),兼容非 Excel 写入器
 var (
-	siBlockRe = regexp.MustCompile(`(?s)<si(?:\s[^>]*)?>(.*?)</si>`)
-	isBlockRe = regexp.MustCompile(`(?s)<is(?:\s[^>]*)?>(.*?)</is>`)
-	xlsxTRe   = regexp.MustCompile(`(?s)(<t(?:\s[^>]*)?>)(.*?)</t>`)
-	rPhRe     = regexp.MustCompile(`(?s)<rPh(?:\s[^>]*)?>.*?</rPh>`)
+	siBlockRe = regexp.MustCompile(`(?s)<(?:\w+:)?si(?:\s[^>]*)?>(.*?)</(?:\w+:)?si>`)
+	isBlockRe = regexp.MustCompile(`(?s)<(?:\w+:)?is(?:\s[^>]*)?>(.*?)</(?:\w+:)?is>`)
+	// 注意:必须排除自闭合 <t/>、<t a="1"/>,否则会把后续 XML 吞进文本组
+	xlsxTRe   = regexp.MustCompile(`(?s)(<(?:\w+:)?t(?:\s+[^>]*[^>/\s])?\s*>)(.*?)(</(?:\w+:)?t>)`)
+	rPhRe     = regexp.MustCompile(`(?s)<(?:\w+:)?rPh(?:\s[^>]*)?>.*?</(?:\w+:)?rPh>`)
 )
 
 func (p *XLSXProcessor) FileType() filetype.FileType {
@@ -129,6 +131,7 @@ func parseXLSXBlock(file string, start, end int, inner string) xlsxBlock {
 		text := decodeXMLEntities(inner[m[4]:m[5]])
 		runs = append(runs, RunInfo{
 			OpenTag:     inner[m[2]:m[3]],
+			CloseTag:    inner[m[6]:m[7]],
 			Text:        text,
 			StartInPara: m[0],
 			EndInPara:   m[1],
@@ -169,6 +172,14 @@ func isTranslatableCell(s string) bool {
 func (p *XLSXProcessor) ExtractSegments() ([]Segment, error) {
 	if err := p.parse(); err != nil {
 		return nil, err
+	}
+	if len(p.cachedBlocks) == 0 {
+		names := make([]string, 0, len(p.cachedFiles))
+		for n := range p.cachedFiles {
+			names = append(names, n)
+		}
+		sort.Strings(names)
+		return nil, fmt.Errorf("xlsx: no string blocks (<si>/<is>) found; scanned %d file(s): %s", len(names), strings.Join(names, ", "))
 	}
 	var segs []Segment
 	for i, b := range p.cachedBlocks {
@@ -250,7 +261,7 @@ func replaceBlockRuns(b xlsxBlock, runTexts []string) string {
 		if i < len(runTexts) {
 			text = runTexts[i]
 		}
-		result = result[:run.StartInPara] + run.OpenTag + encodeXMLEntities(text) + "</t>" + result[run.EndInPara:]
+		result = result[:run.StartInPara] + run.OpenTag + encodeXMLEntities(text) + run.CloseTag + result[run.EndInPara:]
 	}
 	return result
 }
@@ -273,7 +284,7 @@ func replaceBlockFirstRun(b xlsxBlock, translated string) string {
 		if i == firstIdx {
 			text = translated
 		}
-		result = result[:run.StartInPara] + run.OpenTag + encodeXMLEntities(text) + "</t>" + result[run.EndInPara:]
+		result = result[:run.StartInPara] + run.OpenTag + encodeXMLEntities(text) + run.CloseTag + result[run.EndInPara:]
 	}
 	return result
 }

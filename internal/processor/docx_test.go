@@ -167,4 +167,15 @@ func TestEncodeDecodeXMLEntities(t *testing.T) {
 			t.Errorf("decode(encode(%q))=%q, want %q", tt.input, dec, tt.input)
 		}
 	}
+
+	// 数字字符引用(openpyxl 等会把非 ASCII 写成 &#NNNN;)
+	if got := decodeXMLEntities("&#23436;&#25104;"); got != "完成" {
+		t.Errorf("decimal entity: got %q", got)
+	}
+	if got := decodeXMLEntities("&#x5B8C;&#x6210;"); got != "完成" {
+		t.Errorf("hex entity: got %q", got)
+	}
+	if got := decodeXMLEntities("&#999999999;"); got != "&#999999999;" {
+		t.Errorf("invalid entity should stay as-is: got %q", got)
+	}
 }
