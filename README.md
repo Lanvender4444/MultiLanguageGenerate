@@ -1,6 +1,7 @@
 # MultiLanguageGenerate
 
-![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=4000&pause=1000&width=650&height=80&lines=MultiLanguageGenerate+是一款基于+Golang+的;高并发+多语言+多格式翻译文件生成器。)
+
+![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&duration=5000&pause=1000&width=1000&height=200&shuffle=true&lines=%E4%BD%A0%E5%A5%BD%EF%BC%81%E8%BF%99%E9%87%8C%E6%98%AF+MultiLanguageGenerate%EF%BC%8C+%E4%B8%80%E6%AC%BE%E5%9F%BA%E4%BA%8E+Golang+%E7%9A%84%EF%BC%8C%E9%AB%98%E5%B9%B6%E5%8F%91+%E5%A4%9A%E8%AF%AD%E8%A8%80+%E5%A4%9A%E6%A0%BC%E5%BC%8F+%E7%BF%BB%E8%AF%91%E6%96%87%E4%BB%B6%E7%94%9F%E6%88%90%E5%99%A8%E3%80%82;Hello%21+This+is+MultiLanguageGenerate%2C+a+high-concurrency%2C+multi-language%2C+multi-format+translation+file+generator+based+on+Golang.)
 
 MultiLanguageGenerate 是一款基于 Golang 的，高并发 多语言 多格式 翻译文件生成器。
 
