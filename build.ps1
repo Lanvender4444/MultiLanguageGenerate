@@ -6,7 +6,7 @@ $env:CGO_ENABLED = "1"
 # 检查并生成 Windows 资源文件（将 ico 图标编译为 app.syso），若不需要图标可跳过此步骤
 if (Test-Path "public/icon.ico") {
     Write-Host "Generating Windows resource with icon..." -ForegroundColor Cyan
-    rsrc -manifest=manifest.xml -ico public/icon.ico -o app.syso
+    rsrc -ico public/icon.ico -o app.syso
 } else {
     Write-Host "Warning: public/icon.ico not found, historical icon might not be applied." -ForegroundColor Yellow
 }
