@@ -4,10 +4,11 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
-	"math"
 
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/filetype"
 )
@@ -19,6 +20,7 @@ import (
 // RunInfo 描述一个 <w:t> 节点在 paraContent 中的位置与内容
 type RunInfo struct {
 	OpenTag     string // 完整的开标签，例如 <w:t> 或 <w:t xml:space="preserve">
+	CloseTag    string // 完整的闭标签，例如 </w:t> 或 </t>(xlsx 用,保留原前缀)
 	Text        string // 解码后的纯文字内容
 	StartInPara int    // 在 paraContent 中的起始字节偏移（含 <w:t>）
 	EndInPara   int    // 在 paraContent 中的结束字节偏移（含 </w:t>）
@@ -44,7 +46,8 @@ var (
 	paraOpenRe = regexp.MustCompile(`<w:p(?:\s[^>]*)?>`)
 
 	// 匹配完整的 <w:t ...>...</w:t>，捕获组1=开标签内容，捕获组2=文字内容
-	wtTagRe = regexp.MustCompile(`(<w:t(?:[^>]*)>)(.*?)</w:t>`)
+	// 注意:必须排除自闭合 <w:t/>,否则会把后续 XML 吞进文字组
+	wtTagRe = regexp.MustCompile(`(?s)(<w:t(?:\s+[^>]*[^>/\s])?\s*>)(.*?)</w:t>`)
 )
 
 // ─────────────────────────────────────────────
@@ -499,7 +502,26 @@ func addBytesToZip(zw *zip.Writer, name string, data []byte) error {
 // XML 实体编解码
 // ─────────────────────────────────────────────
 
+var numericEntityRe = regexp.MustCompile(`&#(x[0-9a-fA-F]+|[0-9]+);`)
+
 func decodeXMLEntities(s string) string {
+	// 数字字符引用:&#23436; / &#x5B8C;(openpyxl 等写入器会把非 ASCII 转义)
+	if strings.Contains(s, "&#") {
+		s = numericEntityRe.ReplaceAllStringFunc(s, func(m string) string {
+			body := m[2 : len(m)-1]
+			var code int64
+			var err error
+			if body[0] == 'x' || body[0] == 'X' {
+				code, err = strconv.ParseInt(body[1:], 16, 32)
+			} else {
+				code, err = strconv.ParseInt(body, 10, 32)
+			}
+			if err != nil || code <= 0 || code > 0x10FFFF {
+				return m
+			}
+			return string(rune(code))
+		})
+	}
 	// 顺序很重要：&amp; 必须最后 decode，最先 encode
 	s = strings.ReplaceAll(s, "&amp;", "&")
 	s = strings.ReplaceAll(s, "&lt;", "<")
