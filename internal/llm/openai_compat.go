@@ -47,7 +47,10 @@ type modelEntry struct {
 }
 
 func (p *OpenAICompatProvider) Translate(ctx context.Context, req TranslateRequest) (string, error) {
-	sysPrompt := processor.BuildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode, req.SourceType)
+	sysPrompt := req.SystemPrompt
+	if sysPrompt == "" {
+		sysPrompt = processor.BuildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode, req.SourceType)
+	}
 
 	chatReq := chatRequest{
 		Model: req.Model,

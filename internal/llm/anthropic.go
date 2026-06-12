@@ -41,7 +41,10 @@ type anthropicResponse struct {
 }
 
 func (p *AnthropicProvider) Translate(ctx context.Context, req TranslateRequest) (string, error) {
-	sysPrompt := processor.BuildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode, req.SourceType)
+	sysPrompt := req.SystemPrompt
+	if sysPrompt == "" {
+		sysPrompt = processor.BuildSystemPrompt(req.SourceLanguage, req.TargetLanguage, req.TargetCode, req.SourceType)
+	}
 
 	antReq := anthropicRequest{
 		Model:     req.Model,

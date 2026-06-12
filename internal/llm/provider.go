@@ -11,6 +11,10 @@ type TranslateRequest struct {
 	TargetCode     string
 	Model          string
 	SourceType     filetype.FileType
+
+	// SystemPrompt 由引擎统一构建并注入;为空时 provider 回退到
+	// processor.BuildSystemPrompt(兼容旧调用方)。
+	SystemPrompt string
 }
 
 type Provider interface {
