@@ -2,3 +2,5 @@
 /.github
 *.exe
 *.zip
+
+*.syso
