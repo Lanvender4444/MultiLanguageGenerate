@@ -1,5 +1,8 @@
 $env:PATH = "C:\winlibs\mingw64\bin;" + $env:PATH
-$env:GOPROXY = "https://goproxy.cn,direct"
+
+# 代理设置，国内用户可以使用 https://goproxy.cn 以加速依赖下载
+# $env:GOPROXY = "https://goproxy.cn,direct"
+
 $env:CGO_ENABLED = "1"
 
 go build -ldflags="-H=windowsgui -s -w" -o MultiLanguageGenerate.exe .
