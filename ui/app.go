@@ -273,7 +273,7 @@ func (a *App) buildTranslateTab() fyne.CanvasObject {
 	)
 
 	bg := NewWaterDropBg()
-	return container.NewStack(bg, container.NewPadded(content))
+	return container.NewStack(bg, container.NewPadded(container.NewVScroll(content)))
 }
 
 // ── Tab: 模型 ────────────────────────────────────────────────────────────────
@@ -329,7 +329,7 @@ func (a *App) buildProgressTab() fyne.CanvasObject {
 	progressCard := NewGlassPanel("翻译进度", a.progressPanel.Container())
 
 	bg := NewWaterDropBg()
-	return container.NewStack(bg, container.NewPadded(container.NewVBox(progressCard)))
+	return container.NewStack(bg, container.NewPadded(container.NewVScroll(container.NewVBox(progressCard))))
 }
 
 // ── startTranslation ─────────────────────────────────────────────────────────
