@@ -1,0 +1,130 @@
+你好！这里是 MultiLanguageGenerate， 一款基于 Golang 的，高并发 多语言 多格式 翻译文件生成器。
+Sveiki! Čia yra MultiLanguageGenerate, aukštai lygiagretus, daugiakalbis, daugiaformatis vertimo failų generatorius, pagrįstas Golang.
+Ciao! Questo è MultiLanguageGenerate, un generatore di file di traduzione basato su Golang, ad alta concorrenza, multilingue e multiformato.
+नमस्कार! हे MultiLanguageGenerate आहे, एक Golang-आधारित, उच्च-एकत्रित, बहुभाषी, बहु-स्वरूप भाषांतर फाइल जनरेटर.
+Hallo! Hier is MultiLanguageGenerate, 'n hoë gelyktydigheid meertalige multiformaat vertaallêergenerator gebaseer op Golang.
+Halo! Ieu MultiLanguageGenerate, hiji generator file tarjamahan dumasar kana Golang, kalawan konkurensi luhur, multibasa, sarta multiformat.
+ආයුබෝවන්! මෙය MultiLanguageGenerate, Golang මත පදනම් වූ, අධික සමගාමී බහු-භාෂා බහු-ආකෘති පරිවර්තන ගොනු උත්පාදක යන්ත්‍රයකි.
+مرحبًا! هذه هي MultiLanguageGenerate، مولّد ملفات ترجمة عالي التوازي ومتعدد اللغات ومتعدد التنسيقات مبني على Golang.
+Lumela! Mona ke MultiLanguageGenerate, mofuta oa Golang o thehiloeng, o sebetsang ka tsela e phahameng, oa lipuo tse ngata, liforomo tse ngata, sehlahisoa sa phetolelo sa lifaele.
+Bonjour ! Voici MultiLanguageGenerate, un générateur de fichiers de traduction multilingue, multi-format et à haute concurrence basé sur Golang.
+Bonjour ! Voici MultiLanguageGenerate, un générateur de fichiers de traduction basé sur Golang, à haute concurrence, multilingue et multi-format.
+হ্যালো! ইয়াঁহা MultiLanguageGenerate, এবুং গোলাং-গী ওংনবা, থাংনা থম্বা, লোন তম্বা, মপানগী মায়েক সেম্বা অনুবাদ ফাইল সেম্বা।
+ہیلو! یہ ہے MultiLanguageGenerate، ایک Golang پر مبنی اعلی ہم آہنگی، کثیر زبان، کثیر شکل ترجمہ فائل جنریٹر۔
+Salom! Bu MultiLanguageGenerate, Golang asosidagi, yuqori konkurentli, ko'p tilli, ko'p formatli tarjima fayllar generatori.
+Hai! Ini adalah MultiLanguageGenerate, sebuah penjana fail terjemahan berbilang bahasa, berbilang format, dan konkurensi tinggi yang berasaskan Golang.
+مرحبا! هنا MultiLanguageGenerate، أداة مبنية على Golang، مولد ملفات ترجمة عالي التوازي، متعدد اللغات، متعدد الصيغ.
+ሰላም! እዚ እዩ MultiLanguageGenerate፣ ሓደ ኣብ Golang ዝተመርኰሰ ከፍተኛ ሓድሕድ ፍርያት፣ ብዙሕ ቋንቋታት፣ ብዙሕ ቅርጺታት ናይ ምትርጉም ፋይላት አመራረቲ።
+Сәлам! Бу - MultiLanguageGenerate, Golang нигезендә эшләнгән, югары конкуренцияле, күп телле, күп форматлы тәрҗемә файллары генераторы.
+¡Hola! Aquí está MultiLanguageGenerate, un generador de archivos de traducción de múltiples formatos, múltiples idiomas y alta concurrencia basado en Golang.
+Hello! This is MultiLanguageGenerate, a high-concurrency, multi-language, multi-format translation file generator based on Golang.
+Hello! This is MultiLanguageGenerate, a high-concurrency, multi-language, multi-format translation file generator based on Golang.
+नमस्ते! यहाँ MultiLanguageGenerate हो, जुन Golang मा आधारित एउटा उच्च समवर्ती, बहुभाषी, बहु ढाँचा अनुवाद फाइल जेनेरेटर हो।
+Dobrodošli! Tukaj je MultiLanguageGenerate, prevajalniški generator datotek z visoko sočasnostjo, večjezičnostjo in večformati, temelječ na Golangu.
+Hallo! Dit is MultiLanguageGenerate,  een op Golang gebaseerde, hoog gelijktijdige meertalige meervoudige formaat vertaalbestandsgenerator.
+မင်္ဂလာပါ! ဤနေရာသည် MultiLanguageGenerate ဖြစ်ပြီး၊ Golang ကိုအခြေခံထားသော မြင့်မားသော တစ်ပြိုင်နက်လုပ်ဆောင်နိုင်မှု၊ ဘာသာစကားမျိုးစုံ၊ ပုံစံမျိုးစုံရှိသော ဘာသာပြန်ဖိုင်ထုတ်လုပ်ကိရိယာတစ်ခုဖြစ်သည်။
+Bongu! Hawnhekk MultiLanguageGenerate, ġeneratur ta' fajls ta' traduzzjoni bbażat fuq Golang, b'konkorrenza għolja, b'ħafna lingwi, u b'ħafna formati.
+Salaan! Halkan waa MultiLanguageGenerate, dhaliye faylalka turjumaadda ee ku salaysan Golang, oo leh isku-dhufasho sare, luqado badan, iyo qaabab badan.
+Γεια σας! Εδώ είναι το MultiLanguageGenerate, μια γεννήτρια αρχείων μετάφρασης βασισμένη στο Golang, υψηλής ταυτοχρονικότητας, πολύγλωσσης και πολλαπλών μορφών.
+Hujambo! Hapa ni MultiLanguageGenerate,  kichakataji cha faili za tafsiri cha lugha nyingi na miundo mingi, chenye usambazaji wa juu, kinachotegemea Golang.
+Hej! Det här är MultiLanguageGenerate, en översättningsfilgenerator för hög samtidighet, flera språk och flera format, baserad på Golang.
+สวัสดี! นี่คือ MultiLanguageGenerate ซึ่งเป็นตัวสร้างไฟล์แปลภาษาหลายภาษา หลายรูปแบบ ที่มีการทำงานพร้อมกันสูง โดยใช้ Golang
+Салом! Ин ҷо MultiLanguageGenerate, як генератори файлҳои тарҷумаи бисёрзабона, бисёрформатӣ, бо ҳамкории баланд, ки дар асоси Golang сохта шудааст.
+Hello! This is MultiLanguageGenerate, a high-concurrency, multi-language, multi-format translation file generator based on Golang.
+Hei! Dette er MultiLanguageGenerate， ein oversettingsfilgenerator basert på Golang, med høg samtidigheit, fleirspråkleg og fleirformat.
+你好！这里是 MultiLanguageGenerate， 一款基于 Golang 的，高并发 多语言 多格式 翻译文件生成器。
+Përshëndetje! Kjo është MultiLanguageGenerate, një gjenerator skedarësh përkthimi me shumë gjuhë dhe shumë formate, me konkurrencë të lartë, bazuar në Golang.
+Salam! Bu MultiLanguageGenerate, Golang əsasında hazırlanmış, yüksək eynivaxtlı, çoxdilli, çoxformatlı tərcümə fayl generatorudur.
+Molo! Nantsi i-MultiLanguageGenerate, isixhobo esekelwe kwi-Golang, esenza iinguqulelo ezininzi ngaxeshanye, ngeelwimi ezininzi, nangokweendlela ezahlukeneyo.
+வணக்கம்! இது MultiLanguageGenerate, Golang அடிப்படையிலான, உயர் இணைநிலை பல மொழி பல வடிவ மொழிபெயர்ப்பு கோப்பு உருவாக்கி.
+Салом! Бу MultiLanguageGenerate, Golang асосидаги, юқори конкуренцияли, кўп тилли, кўп форматли таржима файл генератори.
+नमस्कार! ये MultiLanguageGenerate है, एक Golang पर आधारित, उच्च समवर्ती बहु-भाषा बहु-प्रारूप अनुवाद फ़ाइल जनरेटर।
+Прывітанне! Гэта MultiLanguageGenerate, генератар файлаў перакладу на аснове Golang з высокай паралельнасцю, шматмоўны і шматфарматны.
+Zdravo! Ovo je MultiLanguageGenerate, generator datoteka za prevođenje baziran na Golangu, visoke konkurentnosti, višejezični, višeformatski.
+নমস্কার! এটি MultiLanguageGenerate, একটি Golang-ভিত্তিক, উচ্চ সমবর্তনশীল বহুভাষিক বহুফরম্যাট অনুবাদ ফাইল জেনারেটর।
+Hallo! Hier ist MultiLanguageGenerate, ein auf Golang basierender, hochparalleler mehrsprachiger mehrformatiger Übersetzungsdatei-Generator.
+Hola! Aquí teniu MultiLanguageGenerate, un generador de fitxers de traducció multilingüe i multiformat basat en Golang, d'alta concurrència.
+Tere! Siin on MultiLanguageGenerate, Golangil põhinev, suure konkurentsiga mitmekeelne ja mitmeformaadiline tõlkefailide generaator.
+¡Hola! Aquí está MultiLanguageGenerate, un generador de archivos de traducción basado en Golang, de alta concurrencia, multilenguaje y multiformato.
+ВорчӀами! Гьаниб буго MultiLanguageGenerate, Golang-алда бугеб, цереххатаралъарал мацӀазул ва форматазул гьоркьоб тӀахьалчагӀиялъул генератор.
+Olá! Aqui é o MultiLanguageGenerate, um gerador de arquivos de tradução multilíngue e multiformato, baseado em Golang, com alta concorrência.
+Zdravo! Ovo je MultiLanguageGenerate, generator prevodilačkih datoteka baziran na Golangu, visokog stepena konkurentnosti, višejezični i višeformatski.
+Здравейте! Това е MultiLanguageGenerate, базиран на Golang, висококонкурентен, многоезичен, многоформатен генератор на преводни файлове.
+নমস্কাৰ! এইখন হ'ল MultiLanguageGenerate， Golang ভিত্তিক এটা উচ্চ সমান্তৰাল বহু ভাষা বহু ফৰ্মেট অনুবাদ ফাইল জেনেৰেটৰ।
+ਨਮਸਕਾਰ! ਇਹ MultiLanguageGenerate ਹੈ, ਇੱਕ Golang-ਅਧਾਰਿਤ, ਉੱਚ ਸਮਕਾਲੀ, ਬਹੁ-ਭਾਸ਼ਾਈ ਅਤੇ ਬਹੁ-ਫਾਰਮੈਟ ਅਨੁਵਾਦ ਫਾਈਲ ਜਨਰੇਟਰ।
+Hallo!Hier ist MultiLanguageGenerate, ein auf Golang basierender, hochparalleler mehrsprachiger mehrformatiger Übersetzungsdatei-Generator.
+안녕하세요! 여기는 MultiLanguageGenerate입니다. Go 언어 기반의 고동시성, 다국어, 다형식 번역 파일 생성기입니다.
+Cześć! Oto MultiLanguageGenerate, oparty na Golang, wysoce współbieżny, wielojęzyczny, wieloformatowy generator plików tłumaczeniowych.
+Salam! Burası MultiLanguageGenerate, Golang əsaslı, yüksək eynivaxtlı, çoxdilli, çoxformatlı tərcümə faylı generatorudur.
+Hei! Her er MultiLanguageGenerate, en oversettelsesfilgenerator basert på Golang,høy samtidighet flerspråk flerformat.
+Hei! Dette er MultiLanguageGenerate, en oversettelsesfilgenerator basert på Golang, med høy samtidighet, flerspråklig og flerformat.
+Привет! Был - MultiLanguageGenerate, Golang нигеҙендәге, юғары параллель, күп телле, күп форматлы тәржемә файлдарын генератор.
+Салам! Бурада MultiLanguageGenerate, бир Голанг-ә әсасланан, јүксәк ејнивахтлы, чохдилли, чохформатлы тәрҹүмә фајл ҝенератору.
+سلام! دا د MultiLanguageGenerate ځای دی، یو د Golang پر بنسټ جوړ شوی، لوړ موازي څو ژبو څو فورمو د ژباړې فایل جوړونکی.
+Moni! Apa ndi MultiLanguageGenerate, chopangidwa pa Golang, chomwe chili ndi kuchuluka kwa ntchito, zilankhulo zambiri, ndi mafomati ambiri pa chopanga mafayilo omasulira.
+Kaixo! Hau da MultiLanguageGenerate, Golang-en oinarritutako konkurrentzia altuko, hizkuntza anitzeko eta formatu anitzeko itzulpen-fitxategien sortzailea.
+¡Hola! Este es MultiLanguageGenerate, un generador de archivos de traducción de alta concurrencia, multilenguaje y multiformato basado en Golang.
+Сәлем! Бұл - MultiLanguageGenerate, Golang негізіндегі, жоғары параллелді, көп тілді, көп форматты аударма файл генераторы.
+ನಮಸ್ಕಾರ! ಇದು MultiLanguageGenerate,  Golang ಅನ್ನು ಆಧರಿಸಿದ, ಹೆಚ್ಚಿನ ಸಮಾನಾಂತರತೆ, ಬಹುಭಾಷಾ, ಬಹುಸ್ವರೂಪದ ಅನುವಾದ ಫೈಲ್ ಜನರೇಟರ್.
+Halo! Iki MultiLanguageGenerate, salah sawijining generator file terjemahan multi-basa multi-format kanthi konkurensi dhuwur adhedhasar Golang.
+Zdravo! Ovo je MultiLanguageGenerate,  generator prevodnih fajlova zasnovan na Golangu, sa visokom konkurentnošću, višejezični, višeformatski.
+こんにちは！こちらは MultiLanguageGenerate です。Golang ベースの、高並列・多言語・多フォーマットの翻訳ファイルジェネレーターです。
+Ahoj! Toto je MultiLanguageGenerate, generátor překladových souborů s vysokou souběžností, více jazyky a více formáty založený na Golangu.
+नमस्कार! हांगा आसा MultiLanguageGenerate, एक Golang आधारीत, उच्च संगामी, बहुभाषी, बहु स्वरुप अनुवाद फायली जनरेटर.
+سلام! اینجا MultiLanguageGenerate است، یک تولیدکننده فایل ترجمه مبتنی بر Golang با هم‌روندی بالا، چندزبانه و چندفرمتی.
+ሰላም! እዚህ ነው MultiLanguageGenerate， በGolang ላይ የተመሰረተ， ከፍተኛ ትይዩነት ያለው ባለብዙ ቋንቋ እና ባለብዙ ቅርጸት የትርጉም ፋይል አመንጪ。
+Салам! Бул жерде MultiLanguageGenerate,  Golang'га негизделген, жогорку параллелизмдүү көп тилдүү көп форматтуу котормо файл генератору.
+Hei! Tämä on MultiLanguageGenerate, Golangiin perustuva, korkeasti rinnakkainen, monikielinen ja monimuotoinen käännöstiedostogeneraattori.
+Салам! ХӀара иза MultiLanguageGenerate, Golang тӀехь йина, дукха параллельни, дукха меттанаш, дукха форматаш таржаман файлаш кхоллар.
+你好！这里是 MultiLanguageGenerate， 一款基于 Golang 的，高并发 多语言 多格式 翻译文件生成器。
+Sawubona! Lapha ngu-MultiLanguageGenerate， umthombo osekwe ku-Golang， onokuxhumana okuphezulu， izilimi eziningi， amafomethi ahlukahlukene， umkhiqizi wamafayela okuhumusha.
+Sveiki! Šeit ir MultiLanguageGenerate, uz Golang balstīts, augstas vienlaicības daudzvalodu un dažādu formātu tulkojumu failu ģenerators.
+Silav! Li vir MultiLanguageGenerate ye, çêkerek pelên wergerê yên bi hevdemî ya bilind, pirzimanî û pir-formatan e, ku li ser Golang hatiye çêkirin.
+Привіт! Це MultiLanguageGenerate, генератор файлів перекладу на основі Golang з високою паралельністю, багатомовний та багатоформатний.
+Экии! Бо – MultiLanguageGenerate, Golang үндезиниг, улуг параллелиг, көп дылдыг, көп форматтыг очулга файлдарының генераторы.
+ہیلو! یہ MultiLanguageGenerate ہے، Golang پؠٹھ مبنی اَکھ زیادہ کنکرنٹ، کَثر زبان، کَثر فارمیٹ ترجمہ فائِل جینریٹر۔
+नमस्ते! ई MultiLanguageGenerate छी, Golang पर आधारित, उच्च संवर्ति, बहुभाषी, बहुप्रारूपी अनुवाद फाइल जनक।
+ياخشىمۇسىز! بۇ يەردە MultiLanguageGenerate، Golang ئاساسىدىكى، يۇقىرى قوشۇپ چىقىرىش كۆپ تىللىق، كۆپ فورماتلىق تەرجىمە ھۆججەت گېنېراتورى.
+Helo! Dyma MultiLanguageGenerate, un sy'n seiliedig ar Golang, cynhyrchydd ffeil cyfieithu cydamseredd uchel, amlieithog, aml-fformat.
+Привет! Это MultiLanguageGenerate — генератор файлов перевода на основе Golang с высокой степенью параллелизма, поддержкой множества языков и форматов.
+Kumusta! Ania ang MultiLanguageGenerate, usa ka high-concurrency, multi-language, multi-format translation file generator nga gibase sa Golang.
+Olá! Aqui é o MultiLanguageGenerate, um gerador de arquivos de tradução baseado em Golang, de alta concorrência, multilíngue e multi-formato.
+សួស្តី! នេះគឺ MultiLanguageGenerate ដែលជាឧបករណ៍បង្កើតឯកសារបកប្រែពហុភាសា ពហុទម្រង់ មានដំណើរការសន្ទនាខ្ពស់ ដោយផ្អែកលើ Golang។
+നമസ്കാരം! ഇവിടെ MultiLanguageGenerate, Golang അധിഷ്ഠിതമായ ഒരു ഉയർന്ന സമാന്തരത, ബഹുഭാഷ, ബഹുഫോർമാറ്റ് വിവർത്തന ഫയൽ ജനറേറ്റർ.
+Здраво! Ова е MultiLanguageGenerate, генератор на преведувачки датотеки базиран на Golang, со висока конкурентност, повеќе јазици и повеќе формати.
+ନମସ୍କାର! ଏହା ହେଉଛି MultiLanguageGenerate, ଗୋଟିଏ Golang-ଆଧାରିତ, ଉଚ୍ଚ କନକରେଣ୍ଟ, ବହୁ-ଭାଷା, ବହୁ-ଫର୍ମାଟ ଅନୁବାଦ ଫାଇଲ ଜେନେରେଟର।
+Mbote! Na biso ezali MultiLanguageGenerate, esaleli ya kotíya na minɔkɔ mingi mpe na bafɔrma mingi oyo esalemi na Golang, na nzela ya mpɛpɛ ya koyela.
+سڵاو! ئەمە MultiLanguageGenerate ە، دروستکەری پەڕگەی وەرگێڕان، کە لەسەر Golang بنیات نراوە، بەرز-هاوکات، فرە-زمان، فرە-فۆرمات.
+Olá! Aqui está o MultiLanguageGenerate, um gerador de arquivos de tradução baseado em Golang, de alta concorrência, multilíngue e multifformato.
+你好！這裡是 MultiLanguageGenerate， 一款基於 Golang 的，高並發 多語言 多格式 翻譯文件生成器。
+Merhaba! Burası MultiLanguageGenerate, Golang tabanlı, yüksek eşzamanlı, çok dilli, çok formatlı bir çeviri dosyası oluşturucu.
+Pẹlẹ o! Eyi ni MultiLanguageGenerate, ẹrọ ti o da lori Golang, ti o ni aṣoju giga, ọpọlọpọ ede, ọpọlọpọ fọọmu, ti o ṣẹda awọn faili itumọ.
+Zdravo! Ovo je MultiLanguageGenerate, generator prijevodnih datoteka temeljen na Golangu, visoke konkurentnosti, višejezičan i višeformatan.
+გამარჯობა! აქ არის MultiLanguageGenerate,  Golang-ზე დაფუძნებული, მაღალი კონკურენციის მრავალენოვანი მრავალფორმატიანი თარგმანის ფაილების გენერატორი.
+Hej! Her er MultiLanguageGenerate, en højkonkurrent, flersproget, multi-format oversættelsesfilgenerator baseret på Golang.
+Salut! Aici este MultiLanguageGenerate, un generator de fișiere de traducere bazat pe Golang, de înaltă concurență, multilingv și multi-format.
+שלום! זהו MultiLanguageGenerate, מחולל קבצי תרגום מבוסס Golang, עם מקביליות גבוהה, רב-לשוני ורב-פורמט.
+Բարև Ձեզ！Ահա MultiLanguageGenerate-ը, Golang-ի վրա հիմնված, բարձր կոնկուրենտություն ունեցող, բազմալեզու, բազմաֆորմատ թարգմանական ֆայլերի գեներատոր:
+Salam! Bu ýerde MultiLanguageGenerate,  Golang esasynda işleýän, ýokary eşlesik  köp dilli  köp formatly terjime faýl generatory.
+Сайн уу! Энэ бол MultiLanguageGenerate, Golang дээр суурилсан, өндөр зэрэгцээ, олон хэл, олон форматтай орчуулгын файл үүсгэгч юм.
+నమస్కారం！ఇది MultiLanguageGenerate， Golang ఆధారితంగా， అధిక కాంకరెన్సీ బహుళ భాషలు బహుళ ఫార్మాట్లతో అనువాద ఫైల్ జనరేటర్。
+Sannu! Wannan shi ne MultiLanguageGenerate, wani mai haifar fayil ɗin fassara na Golang, mai yawan aiki, mai harsuna da yawa, da tsari da yawa.
+Dumela! E ke MultiLanguageGenerate, e e dirilweng ka Golang, e e dirang phettolelo ya difaele ka botlho jo bo kwa godimo, ka diteme tse dintsi le mefuta e e farologaneng.
+Дорообо! Бу MultiLanguageGenerate, Golang-га олоҕурбут, үрдүк кэмпириэссийэлээх, элбэх тыллаах, элбэх формааттаах тылбаас билэтин үөскэтээччи.
+Salama! Eto ny MultiLanguageGenerate, rindrankajy iray miorina amin'ny Golang, taham-pahavitana avo, fiteny maro ary endrika maro, mpamorona rakitra fandikan-teny.
+Halo! Ini adalah MultiLanguageGenerate, sebuah generator file terjemahan multi-bahasa multi-format konkurensi tinggi berdasarkan Golang.
+Сывлӑх! Кунта — MultiLanguageGenerate, Golang çинче никĕсленнĕ, çӳллĕ конкуренциллĕ, нумай чĕлхе, нумай форматлă куҫару файлĕсен генераторĕ.
+Dia duit! Seo é MultiLanguageGenerate, gineadóir comhad aistriúcháin iltheangach, ilfhoirmiúil, le comhthráthaíocht ard, bunaithe ar Golang.
+Ndewo! Nke a bụ MultiLanguageGenerate, onye na-emepụta faịlụ ntụgharị asụsụ nke na-eji Golang, nke nwere ike ịrụ ọrụ dị elu, ọtụtụ asụsụ, na ọtụtụ ụdị.
+Muraho! Hano ni MultiLanguageGenerate, generatora y'amadosiye y'ubuhinduzi ishingiye kuri Golang, ifite ubushobozi bwo gukora ibintu byinshi icyarimwe, amahurizo atandukanye, n'uburyo butandukanye.
+Ola! Aquí está MultiLanguageGenerate, un xerador de ficheiros de tradución baseado en Golang, de alta concorrencia multilingüe multi-formato.
+Halló! Hér er MultiLanguageGenerate, mjög samhliða, margtyngdur, margsniðinn þýðingarskráagerður sem byggir á Golang.
+नमस्ते! यह है MultiLanguageGenerate, एक Golang पर आधारित, उच्च समवर्ती बहुभाषी बहुप्रारूप अनुवाद फ़ाइल जनरेटर।
+Kumusta! Ito ay MultiLanguageGenerate, isang batay sa Golang, mataas na kasabay, maraming wika, maraming format na generator ng pagsasalin ng file.
+Salve! Hic est MultiLanguageGenerate, generator documentorum translationis ex Golang altam concurrentiam, multas linguas, multas formas habens.
+ສະບາຍດີ! ນີ້ແມ່ນ MultiLanguageGenerate, ເປັນເຄື່ອງມືທີ່ອີງໃສ່ Golang, ຂະໜານສູງ ຫຼາຍພາສາ ຫຼາຍຮູບແບບ ເຄື່ອງສ້າງໄຟລ໌ແປພາສາ.
+Bonjou! Isit la se MultiLanguageGenerate, yon jeneratè fichye tradiksyon ki baze sou Golang, segondè konkourans, miltilang ak miltefòma.
+Szia!Ez itt a MultiLanguageGenerate, egy Golang-alapú, nagy konkurenciájú, többnyelvű, többformátumú fordítási fájl generátor.
+Pozdravljeni！Tukaj je MultiLanguageGenerate，  en generator prevajalskih datotek， ki temelji na Golangu， visoko sočasen večjezičen večformaten。
+هيلو!هتي آهي MultiLanguageGenerate،  هڪ Golang تي ٻڌل، اعليٰ متوازي گهڻ-ٻولي گهڻ-فارميٽ ترجمي جي فائلن جو جنريٽر
+નમસ્તે！ આ MultiLanguageGenerate છે， એક Golang પર આધારિત， ઉચ્ચ સમવર્તી બહુભાષી બહુફોર્મેટ અનુવાદ ફાઇલ જનરેટર。
