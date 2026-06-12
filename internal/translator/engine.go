@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -54,23 +55,37 @@ func (e *Engine) Run(ctx context.Context, jobs []Job, progress chan<- Result) {
 			defer func() { <-sem }()
 
 			result := Result{TargetCode: job.TargetCode}
-			outPath := buildOutputPath(job.SourceFile, job.TargetCode, job.OutputDir, job.SourceFileType)
-
 			proc := processor.NewProcessor(job.SourceFileType, job.SourceFile)
 
+			var translatedText string
 			var err error
+
 			if sp, ok := proc.(processor.SegmentProcessor); ok {
-				// DOCX/XLSX:Segment JSON 协议,分批翻译,ID 对位回填
-				err = e.translateSegments(ctx, sp, job, outPath)
+				translatedText, err = e.translateSegments(ctx, sp, job)
+				if err == nil && !job.SkipOutput {
+					outPath := buildOutputPath(job.SourceFile, job.TargetCode, job.OutputDir, job.SourceFileType)
+					if err2 := e.rebuildSegmentsFile(sp, translatedText, outPath); err2 != nil {
+						err = fmt.Errorf("rebuild segments: %w", err2)
+					} else {
+						result.OutputPath = outPath
+					}
+				}
 			} else {
-				// 其余类型:整文件翻译 + 结构校验 + 自动重试
-				err = e.translateWholeFile(ctx, proc, job, outPath)
+				translatedText, err = e.translateWholeFile(ctx, proc, job)
+				if err == nil && !job.SkipOutput {
+					outPath := buildOutputPath(job.SourceFile, job.TargetCode, job.OutputDir, job.SourceFileType)
+					if err2 := e.rebuildFile(proc, translatedText, outPath); err2 != nil {
+						err = fmt.Errorf("rebuild file: %w", err2)
+					} else {
+						result.OutputPath = outPath
+					}
+				}
 			}
 
 			if err != nil {
 				result.Error = err
 			} else {
-				result.OutputPath = outPath
+				result.TranslatedText = translatedText
 			}
 			progress <- result
 		}()
@@ -84,13 +99,13 @@ func (e *Engine) Run(ctx context.Context, jobs []Job, progress chan<- Result) {
 // Segment 协议流程(DOCX/XLSX)
 // ─────────────────────────────────────────────
 
-func (e *Engine) translateSegments(ctx context.Context, sp processor.SegmentProcessor, job Job, outPath string) error {
+func (e *Engine) translateSegments(ctx context.Context, sp processor.SegmentProcessor, job Job) (string, error) {
 	segs, err := sp.ExtractSegments()
 	if err != nil {
-		return fmt.Errorf("extract segments: %w", err)
+		return "", fmt.Errorf("extract segments: %w", err)
 	}
 	if len(segs) == 0 {
-		return fmt.Errorf("no translatable text found in %s", filepath.Base(job.SourceFile))
+		return "", fmt.Errorf("no translatable text found in %s", filepath.Base(job.SourceFile))
 	}
 
 	sysPrompt := processor.BuildSegmentSystemPrompt(job.SourceLanguage, job.TargetName, job.TargetCode, job.SourceFileType)
@@ -100,17 +115,38 @@ func (e *Engine) translateSegments(ctx context.Context, sp processor.SegmentProc
 	for bi, batch := range batches {
 		m, err := e.translateBatch(ctx, batch, sysPrompt, job)
 		if err != nil {
-			return fmt.Errorf("batch %d/%d: %w", bi+1, len(batches), err)
+			return "", fmt.Errorf("batch %d/%d: %w", bi+1, len(batches), err)
 		}
 		for k, v := range m {
 			translations[k] = v
 		}
 	}
 
-	if err := sp.RebuildSegments(translations, outPath); err != nil {
-		return fmt.Errorf("rebuild file: %w", err)
+	var sb strings.Builder
+	for _, seg := range segs {
+		if t, ok := translations[seg.ID]; ok {
+			if sb.Len() > 0 {
+				sb.WriteString("\n")
+			}
+			sb.WriteString(t)
+		}
 	}
-	return nil
+	return sb.String(), nil
+}
+
+func (e *Engine) rebuildSegmentsFile(sp processor.SegmentProcessor, translatedText string, outPath string) error {
+	segs, err := sp.ExtractSegments()
+	if err != nil {
+		return err
+	}
+	transLines := strings.Split(translatedText, "\n")
+	translations := make(map[string]string, len(segs))
+	for i, seg := range segs {
+		if i < len(transLines) {
+			translations[seg.ID] = transLines[i]
+		}
+	}
+	return sp.RebuildSegments(translations, outPath)
 }
 
 // translateBatch 翻译一批 segment,解析失败自动重试
@@ -158,10 +194,10 @@ func (e *Engine) translateBatch(ctx context.Context, batch []processor.Segment, 
 // 整文件流程(Markdown/HTML/XML/JSON/CSV/SRT/PO/纯文本)
 // ─────────────────────────────────────────────
 
-func (e *Engine) translateWholeFile(ctx context.Context, proc processor.Processor, job Job, outPath string) error {
+func (e *Engine) translateWholeFile(ctx context.Context, proc processor.Processor, job Job) (string, error) {
 	extracted, err := proc.Extract(job.SourceFile)
 	if err != nil {
-		return fmt.Errorf("extract file: %w", err)
+		return "", fmt.Errorf("extract file: %w", err)
 	}
 
 	sysPrompt := processor.BuildSystemPrompt(job.SourceLanguage, job.TargetName, job.TargetCode, job.SourceFileType)
@@ -196,12 +232,13 @@ func (e *Engine) translateWholeFile(ctx context.Context, proc processor.Processo
 			continue
 		}
 
-		if err := proc.Rebuild(translated, outPath); err != nil {
-			return fmt.Errorf("rebuild file: %w", err)
-		}
-		return nil
+		return translated, nil
 	}
-	return fmt.Errorf("translation failed after %d attempt(s): %w", e.MaxRetries+1, lastErr)
+	return "", fmt.Errorf("translation failed after %d attempt(s): %w", e.MaxRetries+1, lastErr)
+}
+
+func (e *Engine) rebuildFile(proc processor.Processor, translatedText string, outPath string) error {
+	return proc.Rebuild(translatedText, outPath)
 }
 
 // ─────────────────────────────────────────────

@@ -24,6 +24,9 @@ type AppConfig struct {
 	MaxWorkers              int      `json:"max_workers"`
 	RequestTimeoutSeconds   int      `json:"request_timeout_seconds"`
 	Theme                   string   `json:"theme"` // "wood" | "silver"
+	MergeMode               string   `json:"merge_mode"`   // "none" | "append" | "newfile"
+	MergeFormat             string   `json:"merge_format"` // "markdown" | "plain" | "custom"
+	MergePrompt             string   `json:"merge_prompt"`
 	LLM                     LLMConfig `json:"llm"`
 }
 
@@ -36,6 +39,9 @@ func DefaultConfig() *AppConfig {
 		MaxWorkers:            5,
 		RequestTimeoutSeconds: 120,
 		Theme:                 "wood",
+		MergeMode:             "none",
+		MergeFormat:           "markdown",
+		MergePrompt:           "",
 		LLM: LLMConfig{
 			ActiveProvider: "deepseek",
 			Providers: map[string]ProviderConfig{

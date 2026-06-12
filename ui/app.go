@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -18,6 +19,7 @@ import (
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/filetype"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/language"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/llm"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/processor"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/translator"
 )
 
@@ -38,6 +40,10 @@ type App struct {
 	translateBtn   *widget.Button
 	langFileBtn    *widget.Button
 
+	mergeMode       *widget.RadioGroup
+	mergeFormat     *widget.RadioGroup
+	mergePromptEntry *widget.Entry
+
 	cancelFunc context.CancelFunc
 }
 
@@ -53,7 +59,7 @@ func NewApp(fyneApp fyne.App) *App {
 	SetThemeKind(ThemeKindFromString(cfg.Theme))
 	fyneApp.Settings().SetTheme(NewCustomTheme())
 
-	a.mainWindow = fyneApp.NewWindow("MultiLanguage")
+	a.mainWindow = fyneApp.NewWindow("MultiLanguageGenerate")
 	a.mainWindow.Resize(fyne.NewSize(800, 860))
 
 	a.sourcePanel = NewSourcePanel(a.mainWindow)
@@ -75,6 +81,71 @@ func NewApp(fyneApp fyne.App) *App {
 
 	a.timeoutEntry = widget.NewEntry()
 	a.timeoutEntry.SetText(fmt.Sprintf("%d", cfg.RequestTimeoutSeconds))
+
+	a.mergeMode = widget.NewRadioGroup([]string{"不合并", "追加到源文件后面", "合并到新文件"}, nil)
+	if cfg.MergeMode == "" {
+		cfg.MergeMode = "none"
+	}
+	switch cfg.MergeMode {
+	case "append":
+		a.mergeMode.SetSelected("追加到源文件后面")
+	case "newfile":
+		a.mergeMode.SetSelected("合并到新文件")
+	default:
+		a.mergeMode.SetSelected("不合并")
+	}
+
+	a.mergeFormat = widget.NewRadioGroup([]string{"Markdown 表格", "纯文本", "自定义格式"}, nil)
+	a.mergeFormat.Horizontal = true
+	if cfg.MergeFormat == "" {
+		cfg.MergeFormat = "markdown"
+	}
+	switch cfg.MergeFormat {
+	case "plain":
+		a.mergeFormat.SetSelected("纯文本")
+	case "custom":
+		a.mergeFormat.SetSelected("自定义格式")
+	default:
+		a.mergeFormat.SetSelected("Markdown 表格")
+	}
+
+	a.mergePromptEntry = widget.NewEntry()
+	a.mergePromptEntry.SetPlaceHolder("输入自定义格式 Prompt...")
+	a.mergePromptEntry.SetText(cfg.MergePrompt)
+
+	a.mergeMode.OnChanged = func(v string) {
+		isMerge := v != "不合并"
+		if isMerge {
+			a.outputDirEntry.Disable()
+			a.outputDirEntry.Refresh()
+			a.mergeFormat.Enable()
+			a.mergeFormat.Refresh()
+		} else {
+			a.outputDirEntry.Enable()
+			a.outputDirEntry.Refresh()
+			a.mergeFormat.Disable()
+			a.mergeFormat.Refresh()
+			a.mergePromptEntry.Disable()
+			a.mergePromptEntry.Refresh()
+		}
+	}
+	a.mergeFormat.OnChanged = func(v string) {
+		if v == "自定义格式" {
+			a.mergePromptEntry.Enable()
+		} else {
+			a.mergePromptEntry.Disable()
+		}
+	}
+
+	if a.mergeMode.Selected == "不合并" {
+		a.mergeFormat.Disable()
+		a.mergePromptEntry.Disable()
+	} else {
+		a.outputDirEntry.Disable()
+		if a.mergeFormat.Selected != "自定义格式" {
+			a.mergePromptEntry.Disable()
+		}
+	}
 
 	a.translateBtn = widget.NewButton("开始翻译", a.startTranslation)
 	a.translateBtn.Importance = widget.HighImportance
@@ -220,9 +291,6 @@ func (a *App) buildModelTab() fyne.CanvasObject {
 	})
 
 	optContent := container.NewVBox(
-		widget.NewLabel("输出目录"),
-		container.NewBorder(nil, nil, nil, outputDirBtn, a.outputDirEntry),
-		gap(4),
 		widget.NewLabel("并发数"),
 		container.NewBorder(nil, nil, nil, a.workerLabel, a.workerSlider),
 		gap(4),
@@ -231,10 +299,24 @@ func (a *App) buildModelTab() fyne.CanvasObject {
 	)
 	optCard := NewGlassPanel("选项", optContent)
 
+	mergeContent := container.NewVBox(
+		widget.NewLabel("输出目录"),
+		container.NewBorder(nil, nil, nil, outputDirBtn, a.outputDirEntry),
+		gap(6),
+		a.mergeMode,
+		gap(4),
+		widget.NewLabel("输出格式"),
+		a.mergeFormat,
+		a.mergePromptEntry,
+	)
+	mergeCard := NewGlassPanel("合并输出", mergeContent)
+
 	content := container.NewVBox(
 		llmCard,
 		gap(10),
 		optCard,
+		gap(10),
+		mergeCard,
 	)
 
 	bg := NewWaterDropBg()
@@ -295,6 +377,14 @@ func (a *App) startTranslation() {
 		outputDir, _ = os.Getwd()
 	}
 
+	mergeEnabled := a.mergeMode.Selected != "不合并"
+	if mergeEnabled {
+		outputDir = a.sourcePanel.SourceDir()
+		if outputDir == "" {
+			outputDir, _ = os.Getwd()
+		}
+	}
+
 	maxWorkers := int(a.workerSlider.Value)
 	timeoutSec := a.cfg.RequestTimeoutSeconds
 	fmt.Sscanf(a.timeoutEntry.Text, "%d", &timeoutSec)
@@ -317,6 +407,7 @@ func (a *App) startTranslation() {
 			TargetName:     lang.Name,
 			OutputDir:      outputDir,
 			SourceFileType: srcFileType,
+			SkipOutput:     mergeEnabled,
 		})
 		codes = append(codes, lang.Code)
 	}
@@ -327,6 +418,23 @@ func (a *App) startTranslation() {
 	a.cfg.OutputDirectory = outputDir
 	a.cfg.MaxWorkers = maxWorkers
 	a.cfg.RequestTimeoutSeconds = timeoutSec
+	switch a.mergeMode.Selected {
+	case "追加到源文件后面":
+		a.cfg.MergeMode = "append"
+	case "合并到新文件":
+		a.cfg.MergeMode = "newfile"
+	default:
+		a.cfg.MergeMode = "none"
+	}
+	switch a.mergeFormat.Selected {
+	case "纯文本":
+		a.cfg.MergeFormat = "plain"
+	case "自定义格式":
+		a.cfg.MergeFormat = "custom"
+	default:
+		a.cfg.MergeFormat = "markdown"
+	}
+	a.cfg.MergePrompt = a.mergePromptEntry.Text
 	a.cfg.Save()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -351,8 +459,10 @@ func (a *App) startTranslation() {
 	go func() { engine.Run(ctx, jobs, progress) }()
 
 	go func() {
+		var results []translator.Result
 		for result := range progress {
 			r := result
+			results = append(results, r)
 			fyne.Do(func() { a.progressPanel.UpdateResult(r) })
 		}
 		fyne.Do(func() {
@@ -360,10 +470,113 @@ func (a *App) startTranslation() {
 			a.translateBtn.Importance = widget.HighImportance
 			a.translateBtn.OnTapped = a.startTranslation
 			a.translateBtn.Refresh()
+
+			if a.mergeMode.Selected != "不合并" && len(results) > 0 {
+				a.progressPanel.AddStatusLine("正在合并...")
+				go a.doMerge(results, selectedLangs, sourceLang, srcFileType, provider, pc.Model, outputDir, sourceContent)
+			}
 		})
 	}()
 }
 
 func (a *App) Run() {
 	a.mainWindow.ShowAndRun()
+}
+
+func (a *App) doMerge(results []translator.Result, langs []language.Language, sourceLang string, srcFileType filetype.FileType, provider llm.Provider, model string, outputDir string, sourceText string) {
+	sourceLabel := fmt.Sprintf("原文 (%s)", sourceLang)
+	var langTexts []string
+	langTexts = append(langTexts, fmt.Sprintf("=== %s ===\n%s", sourceLabel, sourceText))
+
+	for _, r := range results {
+		if r.Error != nil {
+			continue
+		}
+		label := r.TargetCode
+		for _, l := range langs {
+			if l.Code == r.TargetCode {
+				label = l.Name + " (" + l.Code + ")"
+				break
+			}
+		}
+		langTexts = append(langTexts, fmt.Sprintf("=== %s ===\n%s", label, r.TranslatedText))
+	}
+
+	if len(langTexts) < 2 {
+		fyne.Do(func() { a.progressPanel.AddStatusLine("合并失败：无有效翻译结果") })
+		return
+	}
+
+	mergeFormat := a.mergeFormat.Selected
+	var mergePrompt, defaultExt string
+	switch mergeFormat {
+	case "纯文本":
+		defaultExt = ".txt"
+		mergePrompt = "请将上述原文及多种语言翻译整理成一个纯文本对照文档。格式：每段先显示语言名称，然后是该语言的文本内容，最后接一个空行。只输出最终文档，不要解释。"
+	case "自定义格式":
+		defaultExt = ".txt"
+		mergePrompt = strings.TrimSpace(a.mergePromptEntry.Text)
+		if mergePrompt == "" {
+			mergePrompt = "请将上述原文及多种语言翻译整理成一个纯文本多语言对照文档。使用“语言名：内容”的格式，每段之间空一行。只输出最终文档，不要解释。"
+		}
+	default:
+		defaultExt = ".md"
+		mergePrompt = "请将上述原文及多种语言翻译整理成一个 Markdown 表格，第一列是语言名，第二列是内容。表格放在文档最前面。保留所有原文格式。只输出最终 Markdown 文档，不要解释。"
+	}
+
+	fullPrompt := fmt.Sprintf("以下是将一份源文档（源语言：%s）翻译成多种语言的结果，附原文：\n\n%s\n\n---\n%s",
+		sourceLang, strings.Join(langTexts, "\n\n"), mergePrompt)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(a.cfg.RequestTimeoutSeconds)*time.Second)
+	defer cancel()
+
+	merged, err := provider.Translate(ctx, llm.TranslateRequest{
+		SourceText:     fullPrompt,
+		SourceLanguage: sourceLang,
+		TargetLanguage: "multi",
+		TargetCode:     "xx",
+		Model:          model,
+		SourceType:     filetype.FileTypePlainText,
+		SystemPrompt:   "You are a document formatting assistant. Combine the source text and multiple translations into a single well-formatted document. Output ONLY the document, no explanations or preamble.",
+	})
+	if err != nil {
+		fyne.Do(func() {
+			a.progressPanel.AddStatusLine(fmt.Sprintf("合并失败: %v", err))
+			dialog.ShowError(err, a.mainWindow)
+		})
+		return
+	}
+
+	merged = processor.StripCodeFence(merged)
+
+	srcName := filepath.Base(a.sourcePanel.SourceFile)
+	ext := filepath.Ext(srcName)
+	base := srcName[:len(srcName)-len(ext)]
+
+	var mergePath string
+	mode := a.mergeMode.Selected
+	if mode == "追加到源文件后面" {
+		if srcFileType == filetype.FileTypePlainText || srcFileType == filetype.FileTypeMarkdown ||
+			srcFileType == filetype.FileTypeSRT || srcFileType == filetype.FileTypePO ||
+			srcFileType == filetype.FileTypeHTML || srcFileType == filetype.FileTypeXML ||
+			srcFileType == filetype.FileTypeJSON || srcFileType == filetype.FileTypeCSV {
+			mergePath = filepath.Join(outputDir, srcName)
+		} else {
+			mergePath = filepath.Join(outputDir, base+defaultExt)
+		}
+	} else {
+		mergePath = filepath.Join(outputDir, base+"_MultiLanguageGenerate"+defaultExt)
+	}
+
+	if err := os.WriteFile(mergePath, []byte(merged), 0644); err != nil {
+		fyne.Do(func() {
+			dialog.ShowError(err, a.mainWindow)
+		})
+		return
+	}
+
+	fyne.Do(func() {
+		a.progressPanel.AddStatusLine(fmt.Sprintf("合并完成: %s", filepath.Base(mergePath)))
+		dialog.ShowInformation("合并完成", fmt.Sprintf("多语言合并文件已保存到：\n%s", mergePath), a.mainWindow)
+	})
 }

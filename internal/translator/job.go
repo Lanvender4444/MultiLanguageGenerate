@@ -12,10 +12,12 @@ type Job struct {
 	TargetName     string
 	OutputDir      string
 	SourceFileType filetype.FileType
+	SkipOutput     bool
 }
 
 type Result struct {
-	TargetCode string
-	OutputPath string
-	Error      error
+	TargetCode     string
+	OutputPath     string
+	TranslatedText string
+	Error          error
 }
