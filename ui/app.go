@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/config"
@@ -35,15 +36,13 @@ type App struct {
 	workerLabel    *widget.Label
 	timeoutEntry   *widget.Entry
 	translateBtn   *widget.Button
-	langFileBtn   *widget.Button
+	langFileBtn    *widget.Button
 
 	cancelFunc context.CancelFunc
 }
 
 func NewApp(fyneApp fyne.App) *App {
-	a := &App{
-		fyneApp: fyneApp,
-	}
+	a := &App{fyneApp: fyneApp}
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -51,8 +50,11 @@ func NewApp(fyneApp fyne.App) *App {
 	}
 	a.cfg = cfg
 
-	a.mainWindow = fyneApp.NewWindow("MultiLanguageGenerate")
-	a.mainWindow.Resize(fyne.NewSize(750, 850))
+	SetThemeKind(ThemeKindFromString(cfg.Theme))
+	fyneApp.Settings().SetTheme(NewCustomTheme())
+
+	a.mainWindow = fyneApp.NewWindow("MultiLanguage")
+	a.mainWindow.Resize(fyne.NewSize(800, 860))
 
 	a.sourcePanel = NewSourcePanel(a.mainWindow)
 	a.langPanel = NewLanguagePanel()
@@ -75,6 +77,7 @@ func NewApp(fyneApp fyne.App) *App {
 	a.timeoutEntry.SetText(fmt.Sprintf("%d", cfg.RequestTimeoutSeconds))
 
 	a.translateBtn = widget.NewButton("开始翻译", a.startTranslation)
+	a.translateBtn.Importance = widget.HighImportance
 
 	a.langFileBtn = widget.NewButton("加载语言文件...", func() {
 		dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
@@ -100,11 +103,11 @@ func NewApp(fyneApp fyne.App) *App {
 		}
 	})
 
-	content := a.buildUI()
-	a.mainWindow.SetContent(content)
-
+	a.mainWindow.SetContent(a.buildUI())
 	return a
 }
+
+// ── loadLanguages / restoreLastSelected ─────────────────────────────────────
 
 func (a *App) loadLanguages() {
 	langPath := a.cfg.LanguageFilePath
@@ -146,8 +149,68 @@ func (a *App) restoreLastSelected() {
 	}
 }
 
+// ── UI builder ───────────────────────────────────────────────────────────────
+
 func (a *App) buildUI() fyne.CanvasObject {
-	outputDirBtn := widget.NewButton("选择目录", func() {
+	tabs := container.NewAppTabs(
+		container.NewTabItemWithIcon("翻译", theme.DocumentIcon(), a.buildTranslateTab()),
+		container.NewTabItemWithIcon("模型", theme.SettingsIcon(), a.buildModelTab()),
+		container.NewTabItemWithIcon("进度", theme.HistoryIcon(), a.buildProgressTab()),
+	)
+	tabs.SetTabLocation(container.TabLocationTop)
+
+	header := NewAppHeader()
+	header.OnToggleTheme = a.toggleTheme
+
+	return container.NewBorder(header, nil, nil, nil, tabs)
+}
+
+// toggleTheme 在「木门·棕」与「水汽·银」之间切换并持久化。
+func (a *App) toggleTheme() {
+	if CurrentThemeKind() == ThemeWood {
+		SetThemeKind(ThemeSilver)
+	} else {
+		SetThemeKind(ThemeWood)
+	}
+	a.cfg.Theme = CurrentThemeKind().String()
+	a.cfg.Save()
+	// 重新设主题触发全树刷新（自定义渲染器在 Refresh 中重读调色板）
+	a.fyneApp.Settings().SetTheme(NewCustomTheme())
+	a.mainWindow.Content().Refresh()
+}
+
+// gap returns a transparent fixed-height spacer between glass cards.
+func gap(h float32) *FixedSpacer {
+	return NewFixedSpacer(h)
+}
+
+// ── Tab: 翻译 ────────────────────────────────────────────────────────────────
+
+func (a *App) buildTranslateTab() fyne.CanvasObject {
+	sourceCard := NewGlassPanel("源文件", a.sourcePanel.Container())
+	langCard := NewGlassPanel("目标语言", a.langPanel.Container())
+
+	btnRow := container.NewVBox(a.langFileBtn, a.translateBtn)
+	actionCard := NewGlassPanel("", btnRow)
+
+	content := container.NewVBox(
+		sourceCard,
+		gap(10),
+		langCard,
+		gap(10),
+		actionCard,
+	)
+
+	bg := NewWaterDropBg()
+	return container.NewStack(bg, container.NewPadded(content))
+}
+
+// ── Tab: 模型 ────────────────────────────────────────────────────────────────
+
+func (a *App) buildModelTab() fyne.CanvasObject {
+	llmCard := NewGlassPanel("LLM 模型", a.llmPanel.Container())
+
+	outputDirBtn := widget.NewButton("选择...", func() {
 		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
 			if err != nil || uri == nil {
 				return
@@ -156,42 +219,38 @@ func (a *App) buildUI() fyne.CanvasObject {
 		}, a.mainWindow)
 	})
 
-	optionsCard := container.NewVBox(
-		widget.NewLabelWithStyle("选项", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("输出目录:"),
+	optContent := container.NewVBox(
+		widget.NewLabel("输出目录"),
 		container.NewBorder(nil, nil, nil, outputDirBtn, a.outputDirEntry),
-		container.NewHBox(
-			widget.NewLabel("并发数:"),
-			a.workerSlider,
-			a.workerLabel,
-		),
-		container.NewHBox(
-			widget.NewLabel("超时(秒):"),
-			a.timeoutEntry,
-		),
+		gap(4),
+		widget.NewLabel("并发数"),
+		container.NewBorder(nil, nil, nil, a.workerLabel, a.workerSlider),
+		gap(4),
+		widget.NewLabel("超时（秒）"),
+		a.timeoutEntry,
 	)
-
-	actionsCard := container.NewVBox(
-		a.langFileBtn,
-		a.translateBtn,
-	)
+	optCard := NewGlassPanel("选项", optContent)
 
 	content := container.NewVBox(
-		a.sourcePanel.Container(),
-		widget.NewSeparator(),
-		a.langPanel.Container(),
-		widget.NewSeparator(),
-		a.llmPanel.Container(),
-		widget.NewSeparator(),
-		optionsCard,
-		widget.NewSeparator(),
-		actionsCard,
-		widget.NewSeparator(),
-		a.progressPanel.Container(),
+		llmCard,
+		gap(10),
+		optCard,
 	)
 
-	return container.NewVScroll(content)
+	bg := NewWaterDropBg()
+	return container.NewStack(bg, container.NewPadded(container.NewVScroll(content)))
 }
+
+// ── Tab: 进度 ────────────────────────────────────────────────────────────────
+
+func (a *App) buildProgressTab() fyne.CanvasObject {
+	progressCard := NewGlassPanel("翻译进度", a.progressPanel.Container())
+
+	bg := NewWaterDropBg()
+	return container.NewStack(bg, container.NewPadded(container.NewVBox(progressCard)))
+}
+
+// ── startTranslation ─────────────────────────────────────────────────────────
 
 func (a *App) startTranslation() {
 	sourceContent, err := a.sourcePanel.ReadSourceContent()
@@ -251,13 +310,13 @@ func (a *App) startTranslation() {
 	codes := make([]string, 0, len(selectedLangs))
 	for _, lang := range selectedLangs {
 		jobs = append(jobs, translator.Job{
-			SourceText:      sourceContent,
-			SourceFile:      a.sourcePanel.SourceFile,
-			SourceLanguage:  sourceLang,
-			TargetCode:      lang.Code,
-			TargetName:      lang.Name,
-			OutputDir:       outputDir,
-			SourceFileType:  srcFileType,
+			SourceText:     sourceContent,
+			SourceFile:     a.sourcePanel.SourceFile,
+			SourceLanguage: sourceLang,
+			TargetCode:     lang.Code,
+			TargetName:     lang.Name,
+			OutputDir:      outputDir,
+			SourceFileType: srcFileType,
 		})
 		codes = append(codes, lang.Code)
 	}
@@ -274,32 +333,31 @@ func (a *App) startTranslation() {
 	a.cancelFunc = cancel
 
 	a.translateBtn.SetText("取消翻译")
+	a.translateBtn.Importance = widget.DangerImportance
 	a.translateBtn.OnTapped = func() {
 		cancel()
 		a.translateBtn.SetText("开始翻译")
+		a.translateBtn.Importance = widget.HighImportance
 		a.translateBtn.OnTapped = a.startTranslation
 		a.translateBtn.Refresh()
 	}
+	a.translateBtn.Refresh()
 
 	progress := make(chan translator.Result, len(jobs))
-
 	for _, code := range codes {
 		a.progressPanel.SetTranslating(code)
 	}
 
-	go func() {
-		engine.Run(ctx, jobs, progress)
-	}()
+	go func() { engine.Run(ctx, jobs, progress) }()
 
 	go func() {
 		for result := range progress {
 			r := result
-			fyne.Do(func() {
-				a.progressPanel.UpdateResult(r)
-			})
+			fyne.Do(func() { a.progressPanel.UpdateResult(r) })
 		}
 		fyne.Do(func() {
 			a.translateBtn.SetText(fmt.Sprintf("开始翻译 (%d 种语言)", len(selectedLangs)))
+			a.translateBtn.Importance = widget.HighImportance
 			a.translateBtn.OnTapped = a.startTranslation
 			a.translateBtn.Refresh()
 		})

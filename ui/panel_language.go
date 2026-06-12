@@ -3,6 +3,7 @@ package ui
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/language"
@@ -17,10 +18,7 @@ type LanguagePanel struct {
 }
 
 func NewLanguagePanel() *LanguagePanel {
-	p := &LanguagePanel{
-		onChange: func() {},
-	}
-	return p
+	return &LanguagePanel{onChange: func() {}}
 }
 
 func (p *LanguagePanel) SetLanguages(languages []language.Language) {
@@ -72,8 +70,7 @@ func (p *LanguagePanel) rebuild() {
 	})
 
 	header := container.NewHBox(
-		widget.NewLabelWithStyle("目标语言", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		layoutSpacer(),
+		layout.NewSpacer(),
 		selectAllBtn,
 		deselectAllBtn,
 	)
@@ -87,15 +84,9 @@ func (p *LanguagePanel) rebuild() {
 	p.box.Refresh()
 }
 
-func layoutSpacer() *fyne.Container {
-	spacer := widget.NewLabel("")
-	spacer.ExtendBaseWidget(spacer)
-	return container.NewHBox(spacer)
-}
-
 func (p *LanguagePanel) Container() *fyne.Container {
 	if p.box == nil {
-		p.box = container.NewVBox(widget.NewLabel("加载语言列表中..."))
+		p.box = container.NewVBox(widget.NewLabel("加载语言列表中…"))
 	}
 	return p.box
 }

@@ -23,6 +23,7 @@ type AppConfig struct {
 	LastSelectedLanguages   []string `json:"last_selected_languages"`
 	MaxWorkers              int      `json:"max_workers"`
 	RequestTimeoutSeconds   int      `json:"request_timeout_seconds"`
+	Theme                   string   `json:"theme"` // "wood" | "silver"
 	LLM                     LLMConfig `json:"llm"`
 }
 
@@ -34,6 +35,7 @@ func DefaultConfig() *AppConfig {
 		LastSelectedLanguages: []string{},
 		MaxWorkers:            5,
 		RequestTimeoutSeconds: 120,
+		Theme:                 "wood",
 		LLM: LLMConfig{
 			ActiveProvider: "deepseek",
 			Providers: map[string]ProviderConfig{
