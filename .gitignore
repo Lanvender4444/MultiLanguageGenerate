@@ -4,3 +4,7 @@
 *.zip
 
 *.syso
+
+# CLI 二进制产物（无扩展名）
+/mlg-cli
+/MultiLanguageGenerate

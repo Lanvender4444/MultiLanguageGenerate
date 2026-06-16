@@ -45,8 +45,28 @@ func LoadFromBytes(data []byte) ([]Language, error) {
 }
 
 func LoadEmbedded() ([]Language, error) {
-	if len(embeddedData) == 0 {
+	// 优先使用 main 注入的数据（RegisterEmbeddedData），
+	// 未注入时回退到本包内嵌的 defaultEmbeddedData。
+	data := embeddedData
+	if len(data) == 0 {
+		data = defaultEmbeddedData
+	}
+	if len(data) == 0 {
 		return nil, fmt.Errorf("no embedded language data")
 	}
-	return LoadFromBytes(embeddedData)
+	return LoadFromBytes(data)
+}
+
+// NameByCode 返回内嵌语言表中某代码对应的显示名；找不到则返回代码本身。
+func NameByCode(code string) string {
+	langs, err := LoadEmbedded()
+	if err != nil {
+		return code
+	}
+	for _, l := range langs {
+		if l.Code == code {
+			return l.Name
+		}
+	}
+	return code
 }
