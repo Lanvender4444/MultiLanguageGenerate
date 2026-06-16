@@ -23,16 +23,14 @@ type SourcePanel struct {
 func NewSourcePanel(window fyne.Window) *SourcePanel {
 	p := &SourcePanel{
 		window:         window,
-		SourceLanguage:  "auto",
+		SourceLanguage: "auto",
 	}
 
 	p.entry = widget.NewEntry()
-	p.entry.SetPlaceHolder("选择或输入源文件路径...")
-	p.entry.OnChanged = func(s string) {
-		p.SourceFile = s
-	}
+	p.entry.SetPlaceHolder("选择或输入源文件路径…")
+	p.entry.OnChanged = func(s string) { p.SourceFile = s }
 
-	p.selectBtn = widget.NewButton("文件...", func() {
+	p.selectBtn = widget.NewButton("选择文件", func() {
 		dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
 			if err != nil || reader == nil {
 				return
@@ -44,9 +42,11 @@ func NewSourcePanel(window fyne.Window) *SourcePanel {
 		}, window)
 	})
 
-	languages := []string{"AI 自动检测", "中文（简体）", "中文（繁體）", "English", "日本語", "한국어",
+	languages := []string{
+		"AI 自动检测", "中文（简体）", "中文（繁體）", "English", "日本語", "한국어",
 		"español", "français", "Deutsch", "português", "русский",
-		"العربية", "हिन्दी", "Bahasa Indonesia", "italiano", "Nederlands"}
+		"العربية", "हिन्दी", "Bahasa Indonesia", "italiano", "Nederlands",
+	}
 
 	p.langSelect = widget.NewSelect(languages, func(s string) {
 		if s == "AI 自动检测" {
@@ -62,13 +62,9 @@ func NewSourcePanel(window fyne.Window) *SourcePanel {
 
 func (p *SourcePanel) Container() *fyne.Container {
 	fileRow := container.NewBorder(nil, nil, nil, p.selectBtn, p.entry)
-	langRow := container.NewHBox(widget.NewLabel("源语言:"), p.langSelect)
+	langRow := container.NewBorder(nil, nil, widget.NewLabel("源语言"), nil, p.langSelect)
 
-	return container.NewVBox(
-		widget.NewLabelWithStyle("源文件", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		fileRow,
-		langRow,
-	)
+	return container.NewVBox(fileRow, langRow)
 }
 
 func (p *SourcePanel) ReadSourceContent() (string, error) {

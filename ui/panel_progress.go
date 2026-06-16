@@ -20,20 +20,18 @@ type progressItem struct {
 }
 
 type ProgressPanel struct {
-	items map[string]*progressItem
-	list  *fyne.Container
-	box   *fyne.Container
+	items    map[string]*progressItem
+	list     *fyne.Container
+	logBox   *fyne.Container
+	box      *fyne.Container
 }
 
 func NewProgressPanel() *ProgressPanel {
-	p := &ProgressPanel{
-		items: make(map[string]*progressItem),
-	}
+	p := &ProgressPanel{items: make(map[string]*progressItem)}
 	p.list = container.NewVBox()
-	p.box = container.NewVBox(
-		widget.NewLabelWithStyle("翻译进度", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		p.list,
-	)
+	p.logBox = container.NewVBox()
+
+	p.box = container.NewVBox(p.list, p.logBox)
 	return p
 }
 
@@ -44,22 +42,26 @@ func (p *ProgressPanel) Container() *fyne.Container {
 func (p *ProgressPanel) InitJobs(codes []string) {
 	p.items = make(map[string]*progressItem)
 	p.list.Objects = nil
+	p.logBox.Objects = nil
 
 	for _, code := range codes {
 		item := &progressItem{
 			code:     code,
 			label:    widget.NewLabel(code),
-			status:   widget.NewLabel("等待中..."),
+			status:   widget.NewLabel("等待中…"),
 			bar:      widget.NewProgressBar(),
 			retryBtn: widget.NewButton("重试", nil),
 		}
 		item.retryBtn.Hide()
-		item.row = container.NewHBox(
+
+		// Border layout: label left, status right, bar fills centre
+		item.row = container.NewBorder(
+			nil, nil,
 			item.label,
-			item.bar,
-			item.status,
 			item.retryBtn,
+			container.NewBorder(nil, nil, nil, item.status, item.bar),
 		)
+
 		p.items[code] = item
 		p.list.Add(item.row)
 	}
@@ -74,11 +76,11 @@ func (p *ProgressPanel) UpdateResult(result translator.Result) {
 
 	if result.Error != nil {
 		item.bar.SetValue(1)
-		item.status.SetText(fmt.Sprintf("失败: %s", truncateError(result.Error.Error(), 50)))
+		item.status.SetText(fmt.Sprintf("失败: %s", truncateErr(result.Error.Error(), 40)))
 		item.retryBtn.Show()
 	} else {
 		item.bar.SetValue(1)
-		item.status.SetText("完成")
+		item.status.SetText("✓ 完成")
 	}
 	item.bar.Refresh()
 	item.status.Refresh()
@@ -87,22 +89,21 @@ func (p *ProgressPanel) UpdateResult(result translator.Result) {
 
 func (p *ProgressPanel) SetTranslating(code string) {
 	if item, ok := p.items[code]; ok {
-		item.status.SetText("翻译中...")
+		item.status.SetText("翻译中…")
 		item.bar.SetValue(0.3)
 		item.status.Refresh()
 		item.bar.Refresh()
 	}
 }
 
-func truncateError(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
+func (p *ProgressPanel) AddStatusLine(text string) {
+	p.logBox.Add(widget.NewLabel(text))
+	p.logBox.Refresh()
 }
 
-func (p *ProgressPanel) AddStatusLine(text string) {
-	lbl := widget.NewLabel(text)
-	p.list.Add(lbl)
-	p.list.Refresh()
+func truncateErr(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	return s[:max] + "…"
 }
