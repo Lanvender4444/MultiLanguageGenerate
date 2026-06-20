@@ -77,7 +77,33 @@ config.json 与 GUI 共用（位于系统用户配置目录下的 `MultiLanguage
 | `-base-url` | 自定义服务地址 |
 | `-workers` | 并发数 |
 | `-timeout` | 单请求超时(秒) |
+| `-glossary` | 专业名词词表 JSON 路径（启用术语强约束） |
 | `-list-langs` / `-list-providers` | 打印清单后退出 |
+
+#### 专业翻译知识库（RAG）与专业名词解析
+
+把专业例子/风格指南投入知识库（拷贝、软链接、硬链接均可），用 RAG 让 AI 生成"专业名词词表"，再在翻译时作为术语强约束注入：
+
+```bash
+# 投入知识库内容（-link: copy|soft|hard）
+mlg-cli kb add ./style-guide.md -tags style -link soft
+mlg-cli kb list
+
+# （可选）建向量索引；不配 embedding 模型则用纯 Go BM25 词法检索
+mlg-cli kb index -embed-model text-embedding-3-small
+mlg-cli kb search -q "违约责任如何表述" -k 5
+
+# 用提示词 + 勾选的知识库内容，让 AI 生成专业名词词表
+mlg-cli glossary gen -prompt "提取人名与法律术语，正式风格" -to en,ja -select legal,style -o glossary.json
+mlg-cli glossary show -f glossary.json
+
+# 翻译时启用词表（术语一致、按上下文消歧）
+mlg-cli translate -file contract.docx -to en,ja -glossary glossary.json
+```
+
+检索策略为**混合**：配置了 embedding 模型走向量语义检索，否则自动回退 BM25（兼容全部厂商）。
+知识库默认目录在系统配置目录下的 `MultiLanguageGenerate/knowledge/`，可用 `-dir` 覆盖。
+环境变量 `MLG_EMBED_MODEL` 可设默认 embedding 模型。详见 `.review/08-知识库与专业名词功能.md`。
 
 ### 作为 Go 库引用
 

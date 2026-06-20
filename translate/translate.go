@@ -27,6 +27,7 @@ import (
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/config"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/detector"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/filetype"
+	"github.com/Lanvender4444/MultiLanguageGenerate/internal/glossary"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/language"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/llm"
 	"github.com/Lanvender4444/MultiLanguageGenerate/internal/translator"
@@ -62,6 +63,10 @@ type Options struct {
 	MaxWorkers int
 	// Timeout 单次 LLM 请求超时；<=0 时取 DefaultTimeout。
 	Timeout time.Duration
+
+	// GlossaryPath 可选的"专业名词"词表 JSON 路径；提供时，词表中对应目标
+	// 语言的术语约束会被注入到每次翻译的提示中，保证术语一致与专业。
+	GlossaryPath string
 
 	// OnResult 可选回调：每完成一种目标语言即被调用一次（用于流式进度展示）。
 	OnResult func(FileResult)
@@ -154,20 +159,34 @@ func Run(ctx context.Context, opts Options) ([]FileResult, error) {
 
 	engine := translator.NewEngine(provider, opts.Model, workers, timeout)
 
+	// ── 可选：加载专业名词词表 ──
+	var gloss *glossary.Glossary
+	if opts.GlossaryPath != "" {
+		g, gerr := glossary.Load(opts.GlossaryPath)
+		if gerr != nil {
+			return nil, fmt.Errorf("translate: load glossary: %w", gerr)
+		}
+		gloss = g
+	}
+
 	// ── 构造 Job 列表（记住每个 code 的显示名供结果回填）──
 	names := make(map[string]string, len(opts.TargetCodes))
 	jobs := make([]translator.Job, 0, len(opts.TargetCodes))
 	for _, code := range opts.TargetCodes {
 		name := language.NameByCode(code)
 		names[code] = name
-		jobs = append(jobs, translator.Job{
+		job := translator.Job{
 			SourceFile:     opts.SourceFile,
 			SourceLanguage: srcLang,
 			TargetCode:     code,
 			TargetName:     name,
 			OutputDir:      outputDir,
 			SourceFileType: srcType,
-		})
+		}
+		if gloss != nil {
+			job.Glossary = gloss.RenderForTarget(code)
+		}
+		jobs = append(jobs, job)
 	}
 
 	// ── 并发执行并收集结果 ──

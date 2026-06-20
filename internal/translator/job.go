@@ -13,6 +13,8 @@ type Job struct {
 	OutputDir      string
 	SourceFileType filetype.FileType
 	SkipOutput     bool
+	// Glossary 为该目标语言渲染好的"专业名词"约束块；非空时追加到系统提示。
+	Glossary string
 }
 
 type Result struct {

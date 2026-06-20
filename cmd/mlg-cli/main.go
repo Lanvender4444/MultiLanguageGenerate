@@ -1,19 +1,13 @@
 // Command mlg-cli 是 MultiLanguageGenerate 的命令行版本。
 //
-// 它复用与 GUI 相同的配置文件（config.json），并允许用命令行参数临时覆盖
-// provider / model / key 等设置，适合脚本、批处理与 CI 场景。
+// 子命令：
 //
-// 示例：
+//	mlg-cli translate ...   翻译文件（默认命令，可省略 "translate"）
+//	mlg-cli kb ...          管理专业翻译知识库（RAG）
+//	mlg-cli glossary ...    生成 / 查看专业名词词表
 //
-//	# 列出可用语言 / 厂商
-//	mlg-cli -list-langs
-//	mlg-cli -list-providers
-//
-//	# 把 report.docx 翻译成英语和日语（复用 config.json 里已保存的厂商与 Key）
-//	mlg-cli -file report.docx -to en,ja
-//
-//	# 临时指定厂商与 Key，覆盖配置
-//	mlg-cli -file notes.md -to fr,de -provider deepseek -model deepseek-chat -key sk-xxx
+// 配置来源优先级：命令行参数 > 环境变量(MLG_API_KEY / MLG_EMBED_MODEL) > config.json。
+// config.json 与 GUI 共用。
 package main
 
 import (
@@ -29,21 +23,73 @@ import (
 )
 
 func main() {
+	args := os.Args[1:]
+	if len(args) == 0 {
+		usage()
+		os.Exit(2)
+	}
+
+	switch args[0] {
+	case "kb":
+		runKB(args[1:])
+	case "glossary", "gloss":
+		runGlossary(args[1:])
+	case "translate":
+		runTranslate(args[1:])
+	case "-h", "--help", "help":
+		usage()
+	default:
+		// 向后兼容：以 "-" 开头的首参视为旧版 translate 用法
+		if strings.HasPrefix(args[0], "-") {
+			runTranslate(args)
+		} else {
+			fmt.Fprintf(os.Stderr, "未知命令：%q\n\n", args[0])
+			usage()
+			os.Exit(2)
+		}
+	}
+}
+
+func usage() {
+	fmt.Println(`mlg-cli — 多语言多格式 AI 翻译工具
+
+用法：
+  mlg-cli translate -file <路径> -to <代码,...> [选项]   翻译文件
+  mlg-cli kb <add|list|index|search> [选项]              管理知识库(RAG)
+  mlg-cli glossary <gen|show> [选项]                     专业名词词表
+
+常用示例：
+  mlg-cli -file report.docx -to en,ja
+  mlg-cli kb add ./style.md -tags style -link soft
+  mlg-cli kb index -embed-model text-embedding-3-small
+  mlg-cli glossary gen -prompt "提取人名与术语" -to en,ja -o glossary.json
+  mlg-cli translate -file novel.md -to en -glossary glossary.json
+
+各子命令的完整参数见： mlg-cli <子命令> -h`)
+}
+
+// ─────────────────────────────────────────────
+// translate 子命令
+// ─────────────────────────────────────────────
+
+func runTranslate(argv []string) {
+	fs := flag.NewFlagSet("translate", flag.ExitOnError)
 	var (
-		file         = flag.String("file", "", "源文件路径（必填）")
-		to           = flag.String("to", "", "目标语言代码，逗号分隔，如 en,ja,fr（必填）")
-		from         = flag.String("from", "auto", "源语言显示名；auto=按内容自动识别")
-		out          = flag.String("out", "", "输出目录；留空则与源文件同目录")
-		provider     = flag.String("provider", "", "LLM 厂商 ID；留空则用 config.json 中的 active_provider")
-		model        = flag.String("model", "", "模型名；留空则用配置中的默认值")
-		key          = flag.String("key", "", "API Key；留空则用配置/环境变量 MLG_API_KEY")
-		baseURL      = flag.String("base-url", "", "自定义服务地址；留空使用厂商默认")
-		workers      = flag.Int("workers", 0, "并发数；<=0 则用配置值或默认 5")
-		timeoutSec   = flag.Int("timeout", 0, "单请求超时(秒)；<=0 则用配置值或默认 120")
-		listLangs    = flag.Bool("list-langs", false, "打印全部可用语言代码后退出")
-		listProvider = flag.Bool("list-providers", false, "打印全部可用厂商后退出")
+		file         = fs.String("file", "", "源文件路径（必填）")
+		to           = fs.String("to", "", "目标语言代码，逗号分隔，如 en,ja,fr（必填）")
+		from         = fs.String("from", "auto", "源语言显示名；auto=自动识别")
+		out          = fs.String("out", "", "输出目录；留空则与源文件同目录")
+		glossaryPath = fs.String("glossary", "", "专业名词词表 JSON 路径（可选，启用术语约束）")
+		provider     = fs.String("provider", "", "厂商 ID；留空用 config.json 的 active_provider")
+		model        = fs.String("model", "", "模型名")
+		key          = fs.String("key", "", "API Key")
+		baseURL      = fs.String("base-url", "", "自定义服务地址")
+		workers      = fs.Int("workers", 0, "并发数；<=0 用配置或默认 5")
+		timeoutSec   = fs.Int("timeout", 0, "单请求超时(秒)；<=0 用配置或默认 120")
+		listLangs    = fs.Bool("list-langs", false, "打印全部语言后退出")
+		listProvider = fs.Bool("list-providers", false, "打印全部厂商后退出")
 	)
-	flag.Parse()
+	_ = fs.Parse(argv)
 
 	if *listLangs {
 		printLanguages()
@@ -54,11 +100,9 @@ func main() {
 		return
 	}
 
-	// ── 基本参数校验 ──
 	if *file == "" || *to == "" {
 		fmt.Fprintln(os.Stderr, "错误：-file 和 -to 为必填参数。")
-		fmt.Fprintln(os.Stderr, "用法示例：mlg-cli -file report.docx -to en,ja")
-		flag.Usage()
+		fmt.Fprintln(os.Stderr, "示例：mlg-cli -file report.docx -to en,ja")
 		os.Exit(2)
 	}
 
@@ -68,22 +112,8 @@ func main() {
 		os.Exit(2)
 	}
 
-	// ── 读取配置（失败则用默认值，不阻断 CLI）──
-	cfg, err := config.Load()
-	if err != nil {
-		cfg = config.DefaultConfig()
-	}
-
-	// ── 解析厂商配置：config + 命令行覆盖 ──
-	providerID := *provider
-	if providerID == "" {
-		providerID = cfg.LLM.ActiveProvider
-	}
-	pc := cfg.LLM.Providers[providerID] // 不存在则为零值
-
-	apiKey := firstNonEmpty(*key, os.Getenv("MLG_API_KEY"), pc.APIKey)
-	modelName := firstNonEmpty(*model, pc.Model)
-	base := firstNonEmpty(*baseURL, pc.BaseURL)
+	cfg := loadConfig()
+	providerID, modelName, apiKey, base := resolveLLM(cfg, *provider, *model, *key, *baseURL)
 
 	maxWorkers := *workers
 	if maxWorkers <= 0 {
@@ -93,17 +123,17 @@ func main() {
 	if *timeoutSec <= 0 && cfg.RequestTimeoutSeconds > 0 {
 		timeout = time.Duration(cfg.RequestTimeoutSeconds) * time.Second
 	}
-
 	outputDir := firstNonEmpty(*out, cfg.OutputDirectory)
 
-	// ── 任务前信息 ──
 	fmt.Printf("源文件   : %s (%s)\n", *file, translate.FileTypeName(*file))
 	fmt.Printf("源语言   : %s\n", *from)
 	fmt.Printf("目标语言 : %s\n", strings.Join(targetCodes, ", "))
 	fmt.Printf("厂商/模型: %s / %s\n", providerID, fallback(modelName, "(默认)"))
+	if *glossaryPath != "" {
+		fmt.Printf("词表     : %s\n", *glossaryPath)
+	}
 	fmt.Println("开始翻译...")
 
-	// ── 执行（流式打印每种语言的结果）──
 	total := len(targetCodes)
 	done := 0
 	failed := 0
@@ -112,6 +142,7 @@ func main() {
 		TargetCodes:    targetCodes,
 		SourceLanguage: *from,
 		OutputDir:      outputDir,
+		GlossaryPath:   *glossaryPath,
 		Provider:       providerID,
 		Model:          modelName,
 		APIKey:         apiKey,
@@ -129,22 +160,41 @@ func main() {
 			}
 		},
 	})
-
 	if runErr != nil {
 		fmt.Fprintf(os.Stderr, "无法启动翻译：%v\n", runErr)
 		os.Exit(1)
 	}
 
-	ok := len(results) - failed
-	fmt.Printf("\n完成：成功 %d，失败 %d，共 %d。\n", ok, failed, len(results))
+	fmt.Printf("\n完成：成功 %d，失败 %d，共 %d。\n", len(results)-failed, failed, len(results))
 	if failed > 0 {
 		os.Exit(1)
 	}
 }
 
 // ─────────────────────────────────────────────
-// 辅助
+// 共享辅助
 // ─────────────────────────────────────────────
+
+func loadConfig() *config.AppConfig {
+	cfg, err := config.Load()
+	if err != nil {
+		return config.DefaultConfig()
+	}
+	return cfg
+}
+
+// resolveLLM 按 命令行 > 环境变量 > config.json 的优先级解析厂商配置。
+func resolveLLM(cfg *config.AppConfig, provider, model, key, baseURL string) (pid, modelName, apiKey, base string) {
+	pid = provider
+	if pid == "" {
+		pid = cfg.LLM.ActiveProvider
+	}
+	pc := cfg.LLM.Providers[pid]
+	apiKey = firstNonEmpty(key, os.Getenv("MLG_API_KEY"), pc.APIKey)
+	modelName = firstNonEmpty(model, pc.Model)
+	base = firstNonEmpty(baseURL, pc.BaseURL)
+	return
+}
 
 func printLanguages() {
 	langs, err := translate.Languages()

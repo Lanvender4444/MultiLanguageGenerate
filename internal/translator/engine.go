@@ -109,6 +109,9 @@ func (e *Engine) translateSegments(ctx context.Context, sp processor.SegmentProc
 	}
 
 	sysPrompt := processor.BuildSegmentSystemPrompt(job.SourceLanguage, job.TargetName, job.TargetCode, job.SourceFileType)
+	if job.Glossary != "" {
+		sysPrompt += "\n\n" + job.Glossary
+	}
 	batches := processor.BatchSegments(segs, e.BatchChars)
 	translations := make(map[string]string, len(segs))
 
@@ -201,6 +204,9 @@ func (e *Engine) translateWholeFile(ctx context.Context, proc processor.Processo
 	}
 
 	sysPrompt := processor.BuildSystemPrompt(job.SourceLanguage, job.TargetName, job.TargetCode, job.SourceFileType)
+	if job.Glossary != "" {
+		sysPrompt += "\n\n" + job.Glossary
+	}
 
 	var lastErr error
 	for attempt := 0; attempt <= e.MaxRetries; attempt++ {
